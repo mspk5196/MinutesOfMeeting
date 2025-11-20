@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { PrimeReactProvider } from 'primereact/api';
 import { BrowserRouter as Router, Route, Routes, Navigate } from "react-router-dom";
 import './App.css';
 import Sidebar from './pages/Sidebar';
+import Logout from './components/Logout';
 import Dashboard from './pages/Dashboard';
 import CreateMeeting from './pages/CreateMeeting';
 import LoginPage from './pages/LoginPage';
@@ -21,7 +22,34 @@ import MeetingReportView from './pages/MeetingReportView';
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
+  // Restore auth state from localStorage on app start (keeps user logged in after refresh)
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      setIsAuthenticated(true);
+      try {
+        // set axios default Authorization header so subsequent requests include the token
+        // lazy-require axios here to avoid circular imports in some setups
+        // eslint-disable-next-line global-require
+        const axios = require('axios');
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      } catch (err) {
+        // ignore if axios can't be required here
+      }
+    }
+  }, []);
+
   const handleLoginSuccess = () => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      try {
+        // eslint-disable-next-line global-require
+        const axios = require('axios');
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      } catch (err) {
+        // ignore
+      }
+    }
     setIsAuthenticated(true);
   };
 
@@ -58,7 +86,7 @@ function App() {
                   <Route path="/cmeeting" element={<Cmeeting />} />
                   <Route path="/reports" element={<Reports />} />
                   <Route path="/support" element={<div>Support</div>} />
-                  <Route path="/logout" element={<div>Logout</div>} />
+                  <Route path="/logout" element={<Logout />} />
                   <Route path="*" element={<Navigate to="/dashboard" replace />} />
                   <Route path='/calendar' element={<Calendar />} />
                   <Route path='/editpoints' element={<EditPoint />} />

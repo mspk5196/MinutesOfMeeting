@@ -54,7 +54,8 @@ const authController = {
                 user: {
                     id: user.id,
                     name: user.name,
-                    email: user.email
+                    email: user.email,
+                    role: user.role || 'participant'
                 }
             });
         } catch (error) {
@@ -68,7 +69,7 @@ const authController = {
 
     register: async(req, res) => {
         try {
-            const { name, email, password } = req.body;
+            const { name, email, password, role } = req.body;
 
             // Validation
             if (!name || !email || !password) {
@@ -94,9 +95,12 @@ const authController = {
             const salt = await bcrypt.genSalt(10);
             const hashedPassword = await bcrypt.hash(password, salt);
 
+            // Determine role - default to 'participant'
+            const userRole = role && typeof role === 'string' ? role.toLowerCase() : 'participant';
+
             // Create user
             const [result] = await db.query(
-                'INSERT INTO users (name, email, password, auth_type) VALUES (?, ?, ?, "local")', [name, email, hashedPassword]
+                'INSERT INTO users (name, email, password, auth_type, role) VALUES (?, ?, ?, "local", ?)', [name, email, hashedPassword, userRole]
             );
 
             // Generate token
@@ -110,7 +114,8 @@ const authController = {
                 user: {
                     id: result.insertId,
                     name,
-                    email
+                    email,
+                    role: userRole
                 }
             });
         } catch (error) {
@@ -126,7 +131,7 @@ const authController = {
         try {
             // Fetch user details (excluding sensitive information)
             const [users] = await db.query(
-                'SELECT id, name, email, auth_type FROM users WHERE id = ?', [req.user.id]
+                'SELECT id, name, email, auth_type, role FROM users WHERE id = ?', [req.user.id]
             );
 
             if (users.length === 0) {

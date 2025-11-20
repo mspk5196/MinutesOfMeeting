@@ -3,11 +3,14 @@ const pool = require('../config/db');
 // Middleware to check if user is an admin
 const isAdmin = async(req, res, next) => {
     try {
+        // Support tokens that set either req.user.id or req.user.userId
+        const userId = req.user && (req.user.id || req.user.userId);
+
         const [user] = await pool.query(
-            'SELECT role FROM users WHERE id = ?', [req.user.id]
+            'SELECT role FROM users WHERE id = ?', [userId]
         );
 
-        if (!user.length || user[0].role !== 'admin') {
+        if (!user.length || (user[0].role || '').toLowerCase() !== 'admin') {
             return res.status(403).json({
                 message: 'Access denied. Admin privileges required.'
             });

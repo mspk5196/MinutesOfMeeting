@@ -32,6 +32,7 @@ function AlternateApprovalAdmin({ meetingId }) {
 
   useEffect(() => {
     if (meetingId) {
+      console.log('AlternateApprovalAdmin: meetingId prop', meetingId);
       fetchPendingRequests();
     }
   }, [meetingId]);
@@ -40,6 +41,7 @@ function AlternateApprovalAdmin({ meetingId }) {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
+      console.log('AlternateApprovalAdmin: token present?', !!token);
       const response = await axios.get(
         `http://localhost:5000/api/meetings/alternate-request/admin/${meetingId}`,
         {
@@ -49,8 +51,10 @@ function AlternateApprovalAdmin({ meetingId }) {
         }
       );
 
-      if (response.data.success) {
-        setRequests(response.data.data);
+      console.log('AlternateApprovalAdmin: fetch response', response.data);
+      if (response.data && response.data.success) {
+        setRequests(response.data.data || []);
+        console.log('AlternateApprovalAdmin: requests length', (response.data.data || []).length);
       }
     } catch (error) {
       console.error('Error fetching alternate requests:', error);
@@ -79,7 +83,13 @@ function AlternateApprovalAdmin({ meetingId }) {
     try {
       setActionLoading(selectedRequest.id);
       const token = localStorage.getItem('token');
-      
+      console.log('AlternateApprovalAdmin: sending admin decision', {
+        requestId: selectedRequest.id,
+        decision: actionType,
+        adminRemarks,
+        tokenPresent: !!token
+      });
+
       const res = await axios.post(
         'http://localhost:5000/api/meetings/alternate-request/admin-approve',
         {
@@ -94,7 +104,8 @@ function AlternateApprovalAdmin({ meetingId }) {
         }
       );
 
-      if (res.data.success) {
+      console.log('AlternateApprovalAdmin: admin decision response', res.data);
+      if (res.data && res.data.success) {
         alert(`Alternate request ${actionType}d successfully!`);
         closeDialog();
         // Refresh the list

@@ -866,7 +866,9 @@ export default function StartMeet({ handleBack }) {
         );
 
         const decoded = JSON.parse(jsonPayload);
-        return decoded.userId;
+        // Support tokens that may use either `userId` or `id` in their payload
+        console.log('MeetingPage: decoded token payload', decoded);
+        return decoded.userId || decoded.id;
       }
     } catch (error) {
       console.error("Error decoding token:", error);

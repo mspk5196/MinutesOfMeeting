@@ -35,8 +35,9 @@ const {
     getAlternateRequestsForAdmin,
     adminApproveAlternate
 } = require('../controllers/meetingController');
+const { isAdmin } = require('../middleware/roles');
 
-router.post('/create', verifyToken, createMeeting)
+router.post('/create', verifyToken, isAdmin, createMeeting)
 router.post('/assign-responsibility', verifyToken, assignResponsibility)
 router.get('/get-calender-details', getAllMeetings)
 router.get('/get-user-meetings', verifyToken, getUserMeetings)

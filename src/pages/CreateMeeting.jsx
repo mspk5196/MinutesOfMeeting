@@ -16,6 +16,7 @@ export default function CreateMeeting({ onUseTemplate, onClose }) {
   const [templates, setTemplates] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   const filters = ["ALL", "M Team", "Academic", "COA", "Skill" , "Business"];
   
@@ -29,6 +30,17 @@ export default function CreateMeeting({ onUseTemplate, onClose }) {
           setError('Authentication required');
           setLoading(false);
           return;
+        }
+
+        // Determine if current user is admin (for UI restrictions)
+        try {
+          const storedUser = localStorage.getItem('userId');
+          if (storedUser) {
+            const parsed = JSON.parse(storedUser);
+            setIsAdmin((parsed.role || '').toLowerCase() === 'admin');
+          }
+        } catch (e) {
+          console.error('Error parsing user from localStorage', e);
         }
 
         const response = await axios.get('http://localhost:5000/api/templates/list', {
@@ -387,11 +399,16 @@ export default function CreateMeeting({ onUseTemplate, onClose }) {
                 color: "#A0A0A0",
               },
             }} 
-            disabled={!selectedMeeting}
+            disabled={!selectedMeeting || !isAdmin}
             onClick={handleTemplateSelect}
           >
-            Use Template
+            {isAdmin ? 'Use Template' : 'Admin only'}
           </Button>
+          {!isAdmin && (
+            <Box sx={{ mt: 1, color: 'warning.main', fontSize: 12, textAlign: 'center' }}>
+              Only admins can create meetings.
+            </Box>
+          )}
 
         </Card>
       </Box>
