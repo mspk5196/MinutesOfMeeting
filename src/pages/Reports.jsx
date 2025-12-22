@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import { api } from '../utils/apiClient';
 import '../styles/Reports.css';
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
@@ -23,7 +23,6 @@ export default function Reports() {
             try {
                 setLoading(true);
                 const token = localStorage.getItem('token');
-                const apiUrl = 'http://localhost:5000';
 
                 if (!token) {
                     setError('Authentication required');
@@ -32,7 +31,7 @@ export default function Reports() {
                 }
 
                 // First get user's meetings
-                const userMeetingsResponse = await axios.get(`${apiUrl}/api/meetings/get-user-meetings`, {
+                const userMeetingsResponse = await api.get(`/api/meetings/get-user-meetings`, {
                     headers: {
                         'Authorization': `Bearer ${token}`,
                         'Content-Type': 'application/json',
@@ -50,7 +49,7 @@ export default function Reports() {
                 const userMeetingIds = userMeetingsResponse.data.meetings.map(meeting => meeting.id);
 
                 // Get completed meetings that user has access to
-                const reportsResponse = await axios.get(`${apiUrl}/api/reports`, {
+                const reportsResponse = await api.get(`/api/reports`, {
                     headers: {
                         'Authorization': `Bearer ${token}`,
                         'Content-Type': 'application/json',
@@ -205,10 +204,9 @@ export default function Reports() {
     const handleDownloadPDF = async (report) => {
         try {
             const token = localStorage.getItem('token');
-            const apiUrl = 'http://localhost:5000';
 
             // Fetch detailed report data
-            const response = await axios.get(`${apiUrl}/api/meetings/meeting/${report.id}`, {
+            const response = await api.get(`/api/meetings/meeting/${report.id}`, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json',
@@ -217,7 +215,7 @@ export default function Reports() {
             });
 
             const meetingData = response.data;
-            const agendaResponse = await axios.get(`${apiUrl}/api/meetings/get-meeting-agenda/${report.id}`, {
+            const agendaResponse = await api.get(`/api/meetings/get-meeting-agenda/${report.id}`, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                 }

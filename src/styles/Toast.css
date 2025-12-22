@@ -1,0 +1,79 @@
+/* Toast Notification Container Styles */
+
+.toast-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 9999;
+  pointer-events: none;
+}
+
+.toast-snackbar {
+  pointer-events: auto;
+  margin-bottom: 12px;
+}
+
+/* Alert animation */
+@keyframes slideInRight {
+  from {
+    transform: translateX(400px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideOutRight {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(400px);
+    opacity: 0;
+  }
+}
+
+.MuiAlert-root {
+  animation: slideInRight 0.3s ease-out;
+}
+
+.MuiAlert-root.MuiAlert-closedRight {
+  animation: slideOutRight 0.3s ease-in;
+}
+
+/* Enhanced alert styling */
+.MuiAlert-standardError {
+  background-color: #ffebee;
+  border-left: 4px solid #d32f2f;
+}
+
+.MuiAlert-standardSuccess {
+  background-color: #e8f5e9;
+  border-left: 4px solid #388e3c;
+}
+
+.MuiAlert-standardWarning {
+  background-color: #fff3e0;
+  border-left: 4px solid #f57c00;
+}
+
+.MuiAlert-standardInfo {
+  background-color: #e3f2fd;
+  border-left: 4px solid #1976d2;
+}
+
+/* Mobile responsive */
+@media (max-width: 600px) {
+  .toast-container {
+    top: 10px;
+    right: 10px;
+    left: 10px;
+  }
+
+  .MuiAlert-root {
+    width: auto;
+  }
+}

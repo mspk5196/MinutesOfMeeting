@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import DOMPurify from 'dompurify';
-import axios from 'axios';
+import { api } from '../utils/apiClient';
 import { Link } from '@mui/material';
 import HistoryIcon from '@mui/icons-material/History';
 import PointHistoryModal from './PointHistoryModal';
@@ -50,8 +50,8 @@ const PreviewMeeting = ({ meetingData, onClose }) => {
 
     try {
       const token = localStorage.getItem("token");
-      const response = await axios.get(
-        `http://localhost:3000/api/meetings/forwarded-point-history/${pointId}`,
+      const response = await api.get(
+        `/api/meetings/forwarded-point-history/${pointId}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }

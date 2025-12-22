@@ -92,6 +92,21 @@ const Sidebar = () => {
 
             {/* Notification Section */}
             <div className="sidebar-notification">
+                {/* <NavLink
+                    to="/test-error-boundary"
+                    className={({ isActive }) => `menu-item ${isActive ? "active" : ""}`}
+                >
+                    {({ isActive }) => (
+                        <>
+                            <BugReport
+                                size={24}
+                                className={`icon ${isActive ? "active" : ""}`}
+                                style={{ color: isActive ? '#007bff' : '#46555F' }}
+                            />
+                            <div className="tooltip">Test Errors</div>
+                        </>
+                    )}
+                </NavLink> */}
                 <NavLink
                     to="/support"
                     className={({ isActive }) => `menu-item ${isActive ? "active" : ""}`}

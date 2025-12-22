@@ -8,7 +8,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import { useLocation, useNavigate } from "react-router-dom";
 import AttendanceIcon from "@mui/icons-material/HowToReg";
 import AgendaIcon from "@mui/icons-material/Groups";
-import axios from "axios";
+import { api, apiUrl } from "../utils/apiClient";
 import CancelIcon from '@mui/icons-material/Cancel';
 import CheckBoxIcon from '@mui/icons-material/CheckBox';
 import MeetingRejection from "../components/MeetingRejection";
@@ -18,6 +18,7 @@ import { FormatBold, FormatItalic, FormatUnderlined, FormatAlignLeft, FormatAlig
 import HistoryIcon from '@mui/icons-material/History';
 import image from "../assets/bannariammanheader.png";
 import format from "date-fns/format";
+import { useSubmitGuard } from "../hooks/useSubmitGuard";
 
 const Reject = ({ onClose, handleSave }) => {
     return (
@@ -117,6 +118,11 @@ export default function JoinMeet() {
     const [attendanceRecords, setAttendanceRecords] = useState([]);
     const [meetingAgenda, setMeetingAgenda] = useState([]);
     const [votingData, setVotingData] = useState({});
+    
+    // Submit guards for different actions
+    const { isSubmitting: isSubmittingTodo, executeSubmit: executeSubmitTodo } = useSubmitGuard(1000);
+    const { isSubmitting: isSubmittingAccept, executeSubmit: executeSubmitAccept } = useSubmitGuard(2000);
+    const { isSubmitting: isSubmittingJoin, executeSubmit: executeSubmitJoin } = useSubmitGuard(2000);
     const [currentUser, setCurrentUser] = useState(null);
     const [isAdmin, setIsAdmin] = useState(false);
     
@@ -145,8 +151,8 @@ export default function JoinMeet() {
     useEffect(() => {
         const fetchAttendanceData = async () => {
             try {
-                const response = await axios.get(
-                    `http://localhost:5000/api/meetings/get-attendance-records/${meetingData.id}`
+                const response = await api.get(
+                    `/api/meetings/get-attendance-records/${meetingData.id}`
                 );
                 console.log(response.data.data)
                 setAttendanceRecords(response.data.data);
@@ -166,8 +172,8 @@ export default function JoinMeet() {
         const token = localStorage.getItem('token')
         const fetchAgenda = async () => {
             try {
-                const response = await axios.get(
-                    `http://localhost:5000/api/meetings/get-meeting-agenda/${meetingData.id}`
+                const response = await api.get(
+                    `/api/meetings/get-meeting-agenda/${meetingData.id}`
                     , {
                         headers: {
                             Authorization: `Bearer ${token}`,
@@ -182,8 +188,8 @@ export default function JoinMeet() {
 
         const fetchAttendanceData = async () => {
             try {
-                const response = await axios.get(
-                    `http://localhost:5000/api/meetings/get-attendance-records/${meetingData.id}`
+                const response = await api.get(
+                    `/api/meetings/get-attendance-records/${meetingData.id}`
                 );
                 console.log(response.data.data)
                 setAttendanceRecords(response.data.data);
@@ -205,7 +211,7 @@ export default function JoinMeet() {
         return () => clearInterval(interval);
     }, []);
 
-    const sendTodo = async (pointId, todo, status) => {
+    const sendTodo = executeSubmitTodo(async (pointId, todo, status) => {
         try {
             const token = localStorage.getItem('token');
             const sentobj = {
@@ -215,8 +221,8 @@ export default function JoinMeet() {
                 remarks: todo
             };
 
-            const response = await axios.post(
-                'http://localhost:5000/api/meetings/set-todo',
+            const response = await api.post(
+                '/api/meetings/set-todo',
                 sentobj,
                 {
                     headers: {
@@ -236,16 +242,16 @@ export default function JoinMeet() {
         } catch (err) {
             console.log(err);
         }
-    };
+    });
 
-    const acceptMeeting = async (status) => {
+    const acceptMeeting = executeSubmitAccept(async (status) => {
         try {
             const meetingId = meetingData.id;
             const token = localStorage.getItem('token');
             const sentobj = { meetingId, status };
 
-            const response = await axios.post(
-                'http://localhost:5000/api/meetings/respond',
+            const response = await api.post(
+                '/api/meetings/respond',
                 sentobj,
                 {
                     headers: {
@@ -258,16 +264,16 @@ export default function JoinMeet() {
         } catch (err) {
             console.log(err);
         }
-    };
+    });
 
-    const joinMeeting = async (status) => {
+    const joinMeeting = executeSubmitJoin(async (status) => {
         try {
             const meetingId = meetingData.id;
             const token = localStorage.getItem('token');
             const sentobj = { meetingId, status };
 
-            const response = await axios.post(
-                'http://localhost:5000/api/meetings/respond',
+            const response = await api.post(
+                '/api/meetings/respond',
                 sentobj,
                 {
                     headers: {
@@ -280,13 +286,13 @@ export default function JoinMeet() {
         } catch (err) {
             console.log(err);
         }
-    };
+    });
 
     const setMeetingState = async () => {
         try {
             const token = localStorage.getItem('token');
-            const response = await axios.post(
-                'http://localhost:5000/api/meetings/get-response',
+            const response = await api.post(
+                '/api/meetings/get-response',
                 { meetingId: meetingData.id },
                 {
                     headers: {
@@ -313,7 +319,7 @@ export default function JoinMeet() {
             const token = localStorage.getItem('token');
             const meetingId = meetingData.id;
             const response = await fetch(
-                'http://localhost:5000/api/meetings/get-responsibility',
+                apiUrl('/api/meetings/get-responsibility'),
                 {
                     method: 'POST',
                     headers: {
@@ -385,8 +391,8 @@ export default function JoinMeet() {
 
         try {
             const token = localStorage.getItem('token');
-            const response = await axios.get(
-                `http://localhost:5000/api/voting/meeting/${meetingData.id}`,
+            const response = await api.get(
+                `/api/voting/meeting/${meetingData.id}`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`,
@@ -415,8 +421,8 @@ export default function JoinMeet() {
                 await Promise.all(
                     response.data.data.points.map(async (point) => {
                         try {
-                            const userVoteResponse = await axios.get(
-                                `http://localhost:5000/api/voting/point/${point.pointId}`,
+                            const userVoteResponse = await api.get(
+                                `/api/voting/point/${point.pointId}`,
                                 {
                                     headers: {
                                         Authorization: `Bearer ${token}`,
@@ -482,7 +488,7 @@ export default function JoinMeet() {
     const startMeeting = async () => {
         try {
             const token = localStorage.getItem('token');
-            const response = await axios.get(`http://localhost:5000/api/meetings/meeting/${meetingData.id}`, {
+            const response = await api.get(`/api/meetings/meeting/${meetingData.id}`, {
                 headers: {
                     Authorization: `Bearer ${token}`
                 }
@@ -510,8 +516,8 @@ export default function JoinMeet() {
         const token = localStorage.getItem('token');
         
         try {
-            const response = await axios.get(
-                `http://localhost:5000/api/meetings/forwarded-point-history/${pointId}`,
+            const response = await api.get(
+                `/api/meetings/forwarded-point-history/${pointId}`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`,
@@ -681,9 +687,10 @@ export default function JoinMeet() {
                                     setIsAccept(true);
                                     acceptMeeting('accept');
                                 }}
+                                disabled={isSubmittingAccept}
                             >
                                 <CheckBoxIcon sx={{ color: "green", fontSize: '10px' }} />
-                                Accept
+                                {isSubmittingAccept ? 'Accepting...' : 'Accept'}
                             </Button>
                         </Box>
                     </Box>

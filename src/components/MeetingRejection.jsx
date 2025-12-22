@@ -15,7 +15,7 @@ import {
   Alert
 } from '@mui/material';
 import { Close as CloseIcon } from '@mui/icons-material';
-import axios from 'axios';
+import { api, apiUrl } from '../utils/apiClient';
 
 function MeetingRejection({ onClose, meetingId, token, meetingMembers }) {
   const [reason, setReason] = useState('');
@@ -38,8 +38,8 @@ function MeetingRejection({ onClose, meetingId, token, meetingMembers }) {
         const currentUserId = decoded.userId;
 
         // Fetch all users from the users table
-        const response = await axios.get(
-          'http://localhost:5000/api/templates/users',
+        const response = await fetch(
+          apiUrl('/api/templates/users'),
           {
             headers: {
               Authorization: `Bearer ${token}`
@@ -47,8 +47,10 @@ function MeetingRejection({ onClose, meetingId, token, meetingMembers }) {
           }
         );
 
+        const data = await response.json();
+
         // Filter out current user and format for autocomplete
-        const allUsers = response.data
+        const allUsers = data
           .filter(user => user.id !== currentUserId)
           .map(user => ({
             user_id: user.id,
@@ -69,8 +71,8 @@ function MeetingRejection({ onClose, meetingId, token, meetingMembers }) {
         console.error('Error fetching users:', error);
         // Fallback: try to get meeting members if users endpoint fails
         try {
-          const response = await axios.get(
-            `http://localhost:5000/api/meetings/meeting/${meetingId}`,
+          const response = await api.get(
+            `/api/meetings/meeting/${meetingId}`,
             {
               headers: {
                 Authorization: `Bearer ${token}`
@@ -129,7 +131,7 @@ function MeetingRejection({ onClose, meetingId, token, meetingMembers }) {
 
       if (rejectionType === 'simple') {
         // Simple rejection
-        const res = await fetch('http://localhost:5000/api/meetings/reject', {
+        const res = await fetch(apiUrl('/api/meetings/reject'), {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -154,26 +156,29 @@ function MeetingRejection({ onClose, meetingId, token, meetingMembers }) {
         }
       } else {
         // Rejection with alternate request
-        const res = await axios.post(
-          'http://localhost:5000/api/meetings/alternate-request/create',
+        const res = await fetch(
+          apiUrl('/api/meetings/alternate-request/create'),
           {
-            meetingId,
-            alternateUserId: selectedAlternate.user_id,
-            reason
-          },
-          {
+            method: 'POST',
             headers: {
               'Content-Type': 'application/json',
               Authorization: `Bearer ${token}`
-            }
+            },
+            body: JSON.stringify({
+              meetingId,
+              alternateUserId: selectedAlternate.user_id,
+              reason
+            })
           }
         );
 
-        if (res.data.success) {
+        const data = await res.json();
+
+        if (data.success) {
           alert('Alternate request sent successfully. The selected person will be notified.');
           onClose();
         } else {
-          alert(res.data.message);
+          alert(data.message);
         }
       }
     } catch (error) {

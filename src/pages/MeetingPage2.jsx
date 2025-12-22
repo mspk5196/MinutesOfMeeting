@@ -17,7 +17,7 @@ const ForwardingForm = ({ onClose, selectedAction: initialAction, remarks, point
   const [templates, setTemplates] = useState([]);
 
   useEffect(() => {
-    const response = axios.get('http://localhost:5000/api/templates/').then((response) => { setTemplates(response.data) });
+    const response = api.get('/api/templates/').then((response) => { setTemplates(response.data) });
   }, [])
 
   const handleActionClick = (action) => {
@@ -42,7 +42,7 @@ const ForwardingForm = ({ onClose, selectedAction: initialAction, remarks, point
 
 
     try {
-      await axios.post('http://localhost:5000/api/meetings/forward-point', {
+      await api.post('/api/meetings/forward-point', {
         pointId,
         templateId,
         forwardType,
@@ -61,7 +61,7 @@ const ForwardingForm = ({ onClose, selectedAction: initialAction, remarks, point
       //   forwardDecision
       // })
 
-      await axios.post('http://localhost:5000/api/meetings/add-admin-remarks/', {
+      await api.post('/api/meetings/add-admin-remarks/', {
         pointId,
         adminRemarks
       }, {

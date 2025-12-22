@@ -18,7 +18,7 @@ const authController = {
 
             // Find user
             const [users] = await db.query(
-                'SELECT * FROM users WHERE email = ? AND auth_type = "local"', [email]
+                'SELECT * FROM users WHERE email = ?', [email]
             );
 
             if (users.length === 0) {
@@ -44,8 +44,10 @@ const authController = {
 
 
             // Generate token
-            const token = jwt.sign({ id: user.id, email: user.email },
-                process.env.JWT_SECRET || 'your-jwt-secret', { expiresIn: '24h' }
+            const token = jwt.sign(
+                { userId: user.id, email: user.email },
+                process.env.JWT_SECRET || 'your-jwt-secret',
+                { expiresIn: process.env.JWT_EXPIRES_IN || '8h' }
             );
 
             res.json({
@@ -104,8 +106,10 @@ const authController = {
             );
 
             // Generate token
-            const token = jwt.sign({ id: result.insertId, email },
-                process.env.JWT_SECRET || 'your-jwt-secret', { expiresIn: '24h' }
+            const token = jwt.sign(
+                { id: result.insertId, email },
+                process.env.JWT_SECRET || 'your-jwt-secret',
+                { expiresIn: process.env.JWT_EXPIRES_IN || '8h' }
             );
 
             res.status(201).json({

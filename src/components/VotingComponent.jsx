@@ -23,7 +23,7 @@ import {
     PlayArrow,
     Stop
 } from '@mui/icons-material';
-import axios from 'axios';
+import { api } from '../utils/apiClient';
 import '../styles/VotingComponent.css';
 
 const VotingComponent = ({ 
@@ -63,7 +63,7 @@ const VotingComponent = ({
 
         try {
             const token = localStorage.getItem('token');
-            const response = await axios.post('http://localhost:5000/api/voting/submit', {
+            const response = await api.post('/api/voting/submit', {
                 pointId,
                 voteType
             }, {
@@ -102,7 +102,7 @@ const VotingComponent = ({
 
         try {
             const token = localStorage.getItem('token');
-            const response = await axios.post('http://localhost:5000/api/voting/start-session', {
+            const response = await api.post('/api/voting/start-session', {
                 pointId
             }, {
                 headers: {
@@ -137,7 +137,7 @@ const VotingComponent = ({
 
         try {
             const token = localStorage.getItem('token');
-            const response = await axios.post('http://localhost:5000/api/voting/end-session', {
+            const response = await api.post('/api/voting/end-session', {
                 pointId
             }, {
                 headers: {

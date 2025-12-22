@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import axios from "axios";
+import { api } from "../utils/apiClient";
 import { Box, Card, Typography, IconButton, InputBase, TableContainer, Table, TableHead, TableRow, TableCell, TableBody, Checkbox, Paper, Button, CircularProgress } from "@mui/material";
 import { Close, Search, KeyboardArrowDown, Check } from "@mui/icons-material";
 
@@ -15,7 +15,7 @@ export default function VenueTable({ onVenueSelect, onClose }) {
     useEffect(() => {
         const fetchVenues = async () => {
             try {
-                const response = await axios.get("http://localhost:5000/api/templates/venues");
+                const response = await api.get("/api/templates/venues");
                 setVenues(response.data);
                 setLoading(false);
             } catch (error) {

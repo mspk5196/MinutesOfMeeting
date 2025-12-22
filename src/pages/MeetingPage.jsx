@@ -27,7 +27,7 @@ import ForwardingForm from "./MeetingPage2";
 import image from "../assets/bannariammanheader.png";
 import { useNavigate } from "react-router-dom";
 import { useLocation } from "react-router-dom";
-import axios, { all } from "axios";
+import { api, apiUrl } from "../utils/apiClient";
 import Reason from "../components/ViewReason";
 import VotingButtons from "../components/VotingButtons";
 import VotingDiagnostic from "../components/VotingDiagnostic";
@@ -38,6 +38,7 @@ import DatePick from "../components/date";
 import React from "react";
 import _ from "lodash";
 import { useMemo } from "react";
+import { useSubmitGuard } from "../hooks/useSubmitGuard";
 
 const cellStyle = {
   border: "1px solid #ddd",
@@ -59,6 +60,12 @@ const headerStyle = {
 export default function StartMeet({ handleBack }) {
   const [selectedReason, setSelectedReason] = useState(null);
   const [attendanceRecords, setAttendanceRecords] = useState([]);
+  
+  // Submit guard hooks
+  const { isSubmitting: isSubmittingPoints, executeSubmit: executeSubmitPoints } = useSubmitGuard(2000);
+  const { isSubmitting: isSubmittingEnd, executeSubmit: executeSubmitEnd } = useSubmitGuard(2000);
+  const { isSubmitting: isSubmittingAttendance, executeSubmit: executeSubmitAttendance } = useSubmitGuard(500);
+  const { isSubmitting: isSubmittingApprove, executeSubmit: executeSubmitApprove } = useSubmitGuard(1000);
 
   const handleViewReason = (userId, username) => {
     const rejection = rejectionRecords.find((r) => r.user_id === userId);
@@ -138,8 +145,8 @@ export default function StartMeet({ handleBack }) {
   useEffect(() => {
     const fetchAttendanceData = async () => {
       try {
-        const response = await axios.get(
-          `http://localhost:5000/api/meetings/get-attendance-records/${meetingData.id}`
+        const response = await api.get(
+          `/api/meetings/get-attendance-records/${meetingData.id}`
         );
         setAttendanceRecords(response.data.data);
       } catch (err) {
@@ -159,8 +166,8 @@ export default function StartMeet({ handleBack }) {
     const token = localStorage.getItem("token");
     const fetchAgenda = async () => {
       try {
-        const response = await axios.get(
-          `http://localhost:5000/api/meetings/get-meeting-agenda/${meetingData.id}`,
+        const response = await api.get(
+          `/api/meetings/get-meeting-agenda/${meetingData.id}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -346,7 +353,7 @@ export default function StartMeet({ handleBack }) {
     }))
   );
 
-  const submitPoints = async () => {
+  const submitPoints = executeSubmitPoints(async () => {
     const token = localStorage.getItem("token");
 
     if (!token) {
@@ -366,8 +373,8 @@ export default function StartMeet({ handleBack }) {
     }));
 
     try {
-      const res = await axios.post(
-        "http://localhost:5000/api/meetings/update-point",
+      const res = await api.post(
+        "/api/meetings/update-point",
         { points: updatedPoints },
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -406,7 +413,7 @@ export default function StartMeet({ handleBack }) {
         err.response?.data || err.message
       );
     }
-  };
+  });
 
   const getNonRejectedMembers = () => {
     const rejectedUserIds = rejectionRecords?.map((r) => r.user_id) || [];
@@ -422,13 +429,13 @@ export default function StartMeet({ handleBack }) {
       }));
   };
 
-  const markAttendance = async (userId, status) => {
+  const markAttendance = executeSubmitAttendance(async (userId, status) => {
     const token = localStorage.getItem("token");
     console.log(userId);
     console.log(attendanceRecords);
     try {
-      await axios.post(
-        "http://localhost:5000/api/meetings/mark-attendence",
+      await api.post(
+        "/api/meetings/mark-attendence",
         {
           meetingId: meetingData.id,
           userId,
@@ -456,13 +463,13 @@ export default function StartMeet({ handleBack }) {
         err.response?.data?.message || err.message
       );
     }
-  };
+  });
 
   const setMeetingState = async () => {
     try {
       const token = localStorage.getItem("token");
-      const response = await axios.get(
-        `http://localhost:5000/api/meetings/get-meeting-status/${meetingData.id}`,
+      const response = await api.get(
+        `/api/voting/meeting/${meetingData.id}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -478,13 +485,13 @@ export default function StartMeet({ handleBack }) {
     }
   };
 
-  const approvePoint = async (pointId, approvedDecision, point, index) => {
+  const approvePoint = executeSubmitApprove(async (pointId, approvedDecision, point, index) => {
     try {
       const token = localStorage.getItem("token");
       const sentobj = { pointId, approvedDecision };
       if (point.todo || point.old_todo) {
-        const response = await axios.post(
-          "http://localhost:5000/api/meetings/approve-point",
+        const response = await api.post(
+          "/api/meetings/approve-point",
           sentobj,
           {
             headers: {
@@ -503,7 +510,7 @@ export default function StartMeet({ handleBack }) {
     } catch (err) {
       console.error(err);
     }
-  };
+  });
 
   // Point history modal handlers
   const handleViewPointHistory = async (pointId, pointName) => {
@@ -515,8 +522,8 @@ export default function StartMeet({ handleBack }) {
     const token = localStorage.getItem('token');
     
     try {
-      const response = await axios.get(
-        `http://localhost:5000/api/meetings/forwarded-point-history/${pointId}`,
+      const response = await api.get(
+        `/api/meetings/forwarded-point-history/${pointId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -572,8 +579,8 @@ export default function StartMeet({ handleBack }) {
     try {
       var token = localStorage.getItem("token");
       var id = meetingData.id;
-      const response = await axios.get(
-        `http://localhost:5000/api/meetings/get-meeting-agenda/${meetingData.id}`,
+      const response = await api.get(
+        `/api/meetings/get-meeting-agenda/${meetingData.id}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -594,8 +601,8 @@ export default function StartMeet({ handleBack }) {
       }
     }
     if (flag == 0) {
-      const response = await axios.post(
-        ` http://localhost:5000/api/meetings/start-meeting/`,
+      const response = await api.post(
+        `/api/meetings/start-meeting/`,
         { meetingId: id },
         {
           headers: {
@@ -614,7 +621,7 @@ export default function StartMeet({ handleBack }) {
     return record ? record.reason : "";
   };
 
-  const EndMeeting = async () => {
+  const EndMeeting = executeSubmitEnd(async () => {
     const allHaveForwardType = meetingAgenda.every(
       (point) =>
         point.forward_info && typeof point.forward_info.type !== "undefined"
@@ -625,8 +632,8 @@ export default function StartMeet({ handleBack }) {
     var id = meetingData.id;
     var token = localStorage.getItem("token");
     if (allHaveForwardType || allHaveDecisionStatus) {
-      const response = await axios.post(
-        `http://localhost:5000/api/meetings/end-meeting/`,
+      const response = await api.post(
+        `/api/meetings/end-meeting/`,
         { meetingId: id },
         {
           headers: {
@@ -638,7 +645,7 @@ export default function StartMeet({ handleBack }) {
     } else {
       alert("Fill in all points!");
     }
-  };
+  });
 
   useEffect(() => {
     meetingData.points.forEach((point, index) => {
@@ -657,7 +664,7 @@ export default function StartMeet({ handleBack }) {
     const fetchRejectionRecords = async () => {
       try {
         const res = await fetch(
-          `http://localhost:5000/api/meetings/get-rejection-records/${meetingData.id}`
+          apiUrl(`/api/meetings/get-rejection-records/${meetingData.id}`)
         );
         const data = await res.json();
 
@@ -735,8 +742,8 @@ export default function StartMeet({ handleBack }) {
 
     try {
       const token = localStorage.getItem("token");
-      const response = await axios.get(
-        `http://localhost:5000/api/voting/meeting/${meetingData.id}`,
+      const response = await api.get(
+        `/api/voting/meeting/${meetingData.id}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -783,8 +790,8 @@ export default function StartMeet({ handleBack }) {
         await Promise.all(
           response.data.data.points.map(async (point) => {
             try {
-              const userVoteResponse = await axios.get(
-                `http://localhost:5000/api/voting/point/${point.pointId}`,
+              const userVoteResponse = await api.get(
+                `/api/voting/point/${point.pointId}`,
                 {
                   headers: {
                     Authorization: `Bearer ${token}`,
@@ -2107,6 +2114,7 @@ export default function StartMeet({ handleBack }) {
               <Button
                 variant="contained"
                 onClick={() => submitPoints()}
+                disabled={isSubmittingPoints}
                 sx={{
                   backgroundColor: "#408FEA",
                   color: "white",
@@ -2120,7 +2128,7 @@ export default function StartMeet({ handleBack }) {
                   },
                 }}
               >
-                💾 Save Meeting Points
+                {isSubmittingPoints ? '⏳ Saving...' : '💾 Save Meeting Points'}
               </Button>
             </Box>
           </TableContainer>

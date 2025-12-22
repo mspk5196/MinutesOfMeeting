@@ -16,7 +16,7 @@ import {
   DialogActions
 } from '@mui/material';
 import { format } from 'date-fns';
-import axios from 'axios';
+import { api } from '../utils/apiClient';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CancelIcon from '@mui/icons-material/Cancel';
@@ -42,8 +42,8 @@ function AlternateApprovalAdmin({ meetingId }) {
       setLoading(true);
       const token = localStorage.getItem('token');
       console.log('AlternateApprovalAdmin: token present?', !!token);
-      const response = await axios.get(
-        `http://localhost:5000/api/meetings/alternate-request/admin/${meetingId}`,
+      const response = await api.get(
+        `/api/meetings/alternate-request/admin/${meetingId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`
@@ -90,8 +90,8 @@ function AlternateApprovalAdmin({ meetingId }) {
         tokenPresent: !!token
       });
 
-      const res = await axios.post(
-        'http://localhost:5000/api/meetings/alternate-request/admin-approve',
+      const res = await api.post(
+        '/api/meetings/alternate-request/admin-approve',
         {
           requestId: selectedRequest.id,
           decision: actionType, // 'approve' or 'reject'

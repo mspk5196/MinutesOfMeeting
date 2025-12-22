@@ -4,7 +4,7 @@ import { Close , Search } from "@mui/icons-material";
 import InsertDriveFileOutlinedIcon from "@mui/icons-material/InsertDriveFileOutlined";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import CheckIcon from "@mui/icons-material/Check";
-import axios from "axios";
+import { api } from "../utils/apiClient";
 
 export default function CreateMeeting({ onUseTemplate, onClose }) {
   const [tselect, setTselect] = useState(null);
@@ -37,13 +37,14 @@ export default function CreateMeeting({ onUseTemplate, onClose }) {
           const storedUser = localStorage.getItem('userId');
           if (storedUser) {
             const parsed = JSON.parse(storedUser);
+            console.log(parsed)
             setIsAdmin((parsed.role || '').toLowerCase() === 'admin');
           }
         } catch (e) {
           console.error('Error parsing user from localStorage', e);
         }
 
-        const response = await axios.get('http://localhost:5000/api/templates/list', {
+        const response = await api.get('/api/templates/list', {
           headers: {
             'Authorization': `Bearer ${token}`
           }

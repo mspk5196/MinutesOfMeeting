@@ -12,7 +12,7 @@ import image from "../assets/bannariammanheader.png";
 import { useNavigate } from "react-router-dom";
 import { useLocation } from 'react-router-dom';
 import InfoIcon from '@mui/icons-material/Info';
-import axios, { all } from "axios";
+import { api, apiUrl } from "../utils/apiClient";
 import Reason from "../components/ViewReason";
 import { format } from "date-fns";
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
@@ -20,6 +20,7 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import dayjs from 'dayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import DatePick from "../components/date";
+import { useSubmitGuard } from "../hooks/useSubmitGuard";
 
 
 // Table cell styles
@@ -43,6 +44,7 @@ const headerStyle = {
 export default function EditPoints({ handleBack }) {
 
     const [selectedReason, setSelectedReason] = useState(null);
+    const { isSubmitting: isSubmittingPoints, executeSubmit: executeSubmitPoints } = useSubmitGuard(2000);
 
     const handleViewReason = (userId, username) => {
         const rejection = rejectionRecords.find((r) => r.user_id === userId);
@@ -109,7 +111,7 @@ export default function EditPoints({ handleBack }) {
     };
 
 
-    const submitPoints = async () => {
+    const submitPoints = executeSubmitPoints(async () => {
         const token = localStorage.getItem("token");
 
         if (!token) {
@@ -130,7 +132,7 @@ export default function EditPoints({ handleBack }) {
         console.log(updatedPoints)
 
         
-        await axios.post("http://localhost:5000/api/meetings/update-point", {points: updatedPoints}, {
+        await api.post("/api/meetings/update-point", {points: updatedPoints}, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
@@ -140,14 +142,14 @@ export default function EditPoints({ handleBack }) {
         // Navigate after successful submission
         navigate("/admin-access", { state: { meetingData } });
 
-    };
+    });
 
 
     const setMeetingState = async () => {
         try {
             const token = localStorage.getItem('token');
-            const response = await axios.get(
-                `http://localhost:5000/api/meetings/get-meeting-status/${meetingData.id}`,
+            const response = await api.get(
+                `/api/meetings/get-meeting-status/${meetingData.id}`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`,
@@ -173,7 +175,7 @@ export default function EditPoints({ handleBack }) {
             const sentobj = { pointId, approvedDecision }
             console.log(point)
             if (point.todo || point.old_todo) {
-                const response = await axios.post('http://localhost:5000/api/meetings/approve-point', sentobj, {
+                const response = await api.post('/api/meetings/approve-point', sentobj, {
                     headers: {
                         Authorization: `Bearer ${token}`,
                     }
@@ -235,7 +237,7 @@ export default function EditPoints({ handleBack }) {
         try {
             var token = localStorage.getItem('token')
             var id = meetingData.id;
-            const response = await axios.get(`http://localhost:5000/api/meetings/get-meeting-agenda/${meetingData.id}`, {
+            const response = await api.get(`/api/meetings/get-meeting-agenda/${meetingData.id}`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 }
@@ -255,7 +257,7 @@ export default function EditPoints({ handleBack }) {
         console.log(flag)
         if (flag == 0) {
 
-            const response = await axios.post(`http://localhost:5000/api/meetings/start-meeting/`, { meetingId: id }, {
+            const response = await api.post(`/api/meetings/start-meeting/`, { meetingId: id }, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 }
@@ -295,7 +297,7 @@ export default function EditPoints({ handleBack }) {
     useEffect(() => {
         const fetchRejectionRecords = async () => {
             try {
-                const res = await fetch(`http://localhost:5000/api/meetings/get-rejection-records/${meetingData.id}`);
+                const res = await fetch(apiUrl(`/api/meetings/get-rejection-records/${meetingData.id}`));
                 const data = await res.json();
                 console.log("Rejection Records:", data);
 
@@ -330,6 +332,7 @@ export default function EditPoints({ handleBack }) {
                     <Button
                         variant="contained"
                         onClick={() => { console.log('clocik'); submitPoints() }}
+                        disabled={isSubmittingPoints}
                         sx={{
                             borderRadius: '5px',
                             backgroundColor: "#6c757d",
@@ -339,7 +342,7 @@ export default function EditPoints({ handleBack }) {
                         }}
                     >
                         <DescriptionOutlinedIcon sx={{ fontSize: "18px" }} />
-                        Save Points
+                        {isSubmittingPoints ? 'Saving...' : 'Save Points'}
                     </Button>
                 </Box>
             </Box>

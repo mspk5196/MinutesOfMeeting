@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react';
 import EventCard from '../components/EventCard.jsx';
-import axios from 'axios';
+import { api } from '../utils/apiClient';
 import dayjs from 'dayjs';
 import '../styles/Calendar.css';
 import { formatInTimeZone } from 'date-fns-tz';
@@ -89,7 +89,7 @@ const Calendar = ({ initialDate = new Date() }) => {
   const fetchMeetings = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get('http://localhost:5000/api/meetings/get-user-meetings', {
+      const response = await api.get('/api/meetings/get-user-meetings', {
         headers: {
           Authorization: `Bearer ${token}`,
         }

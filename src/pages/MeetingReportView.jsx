@@ -64,7 +64,6 @@ export default function MeetingReportView() {
         const fetchReport = async () => {
             try {
                 setLoading(true);
-                const apiUrl = 'http://localhost:5000';
                 const token = localStorage.getItem('token');
 
                 if (!token) {
@@ -74,7 +73,7 @@ export default function MeetingReportView() {
                 }
 
                 // First check if user has access to this meeting
-                const accessCheck = await axios.get(`${apiUrl}/api/meetings/get-meeting-agenda/${id}`, {
+                const accessCheck = await api.get(`/api/meetings/get-meeting-agenda/${id}`, {
                     headers: {
                         'Authorization': `Bearer ${token}`,
                         'Content-Type': 'application/json',
@@ -89,7 +88,7 @@ export default function MeetingReportView() {
                 }
 
                 // If user has access, fetch the meeting details
-                const meetingResponse = await axios.get(`${apiUrl}/api/meetings/meeting/${id}`, {
+                const meetingResponse = await api.get(`/api/meetings/meeting/${id}`, {
                     headers: {
                         'Authorization': `Bearer ${token}`,
                         'Content-Type': 'application/json',
@@ -97,8 +96,8 @@ export default function MeetingReportView() {
                     }
                 });
 
-                const response = await axios.get(
-                    `http://localhost:5000/api/meetings/get-meeting-agenda/${id}`
+                const response = await api.get(
+                    `/api/meetings/get-meeting-agenda/${id}`
                     , {
                         headers: {
                             Authorization: `Bearer ${token}`,

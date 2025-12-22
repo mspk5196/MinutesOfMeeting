@@ -6,6 +6,41 @@ const {
 const jwt = require('jsonwebtoken');
 const { sendMeetingInvitation } = require('../services/emailService');
 
+// In-memory idempotency + duplicate creation guard (per process)
+// Prevents multiple meetings being created when users double-click under slow networks
+const creationLocks = new Map();
+const LOCK_TTL_MS = 30 * 1000; // 30 seconds
+
+function makeMeetingKey(templateId, createdBy, startTime, endTime) {
+    return `${templateId}|${createdBy}|${startTime}|${endTime}`;
+}
+
+function getLock(key) {
+    const lock = creationLocks.get(key);
+    if (!lock) return null;
+    // Expire old locks
+    if (Date.now() - lock.ts > LOCK_TTL_MS) {
+        creationLocks.delete(key);
+        return null;
+    }
+    return lock;
+}
+
+function setPendingLock(key) {
+    creationLocks.set(key, { status: 'pending', ts: Date.now(), meetingId: null });
+}
+
+function setCreatedLock(key, meetingId) {
+    creationLocks.set(key, { status: 'created', ts: Date.now(), meetingId });
+    // Auto-expire to avoid memory growth
+    setTimeout(() => {
+        const current = creationLocks.get(key);
+        if (current && current.meetingId === meetingId) {
+            creationLocks.delete(key);
+        }
+    }, LOCK_TTL_MS);
+}
+
 function groupMembersByRole(data) {
     const grouped = {};
 
@@ -207,6 +242,51 @@ const createMeeting = async (req, res) => {
             });
         }
 
+        // Idempotency/Dedup guard
+        const idempotencyKey = req.headers['idempotency-key'];
+        const fingerprintKey = makeMeetingKey(templateId, created_by, start_time, end_time);
+        const key = idempotencyKey || fingerprintKey;
+
+        // If a lock exists, short-circuit
+        const existingLock = getLock(key);
+        if (existingLock) {
+            if (existingLock.status === 'created' && existingLock.meetingId) {
+                return res.status(200).json({
+                    success: true,
+                    message: 'Duplicate creation prevented; returning existing meeting',
+                    meetingId: existingLock.meetingId,
+                    duplicate: true
+                });
+            }
+            // Another creation in progress for the same fingerprint
+            return res.status(202).json({
+                success: false,
+                message: 'Meeting creation already in progress. Please wait.',
+                inProgress: true
+            });
+        }
+
+        // Check database for an identical meeting created by the same user
+        const [possibleDup] = await db.query(
+            `SELECT id FROM meeting 
+             WHERE template_id = ? AND created_by = ? AND start_time = ? AND end_time = ?
+             ORDER BY id DESC LIMIT 1`,
+            [templateId, created_by, start_time, end_time]
+        );
+        if (possibleDup && possibleDup.length > 0) {
+            // Short-circuit if an identical meeting already exists
+            setCreatedLock(key, possibleDup[0].id);
+            return res.status(200).json({
+                success: true,
+                message: 'Duplicate creation prevented; existing meeting returned',
+                meetingId: possibleDup[0].id,
+                duplicate: true
+            });
+        }
+
+        // Acquire pending lock to prevent concurrent inserts with the same fingerprint
+        setPendingLock(key);
+
         const [templateRows] = await db.query(
             'SELECT * FROM templates WHERE id = ?',
             [templateId]
@@ -253,6 +333,9 @@ const createMeeting = async (req, res) => {
             ]
         );
         const meetingId = meetingResult.insertId;
+
+        // Mark lock as created
+        setCreatedLock(key, meetingId);
 
         if (!roles) {
             const [templateRoles] = await db.query(
@@ -370,6 +453,14 @@ const createMeeting = async (req, res) => {
 
     } catch (error) {
         console.error('Error creating meeting:', error);
+        // Release any pending lock on error so user can retry
+        const idempotencyKey = req.headers['idempotency-key'];
+        const fingerprintKey = makeMeetingKey(req.body.templateId, req.user.userId, req.body.start_time, req.body.end_time);
+        const key = idempotencyKey || fingerprintKey;
+        const lock = creationLocks.get(key);
+        if (lock && lock.status === 'pending') {
+            creationLocks.delete(key);
+        }
         res.status(500).json({
             success: false,
             message: 'Server error'
@@ -2014,7 +2105,8 @@ const getAllMeetings = async (req, res) => {
     }
 };
 
-const JWT_SECRET = 'your_secret_key';
+const JWT_SECRET = process.env.JWT_SECRET || 'your_secret_key';
+const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '8h';
 
 const handleLogin = async (req, res) => {
     const {
@@ -2031,7 +2123,7 @@ const handleLogin = async (req, res) => {
 
     try {
         const [users] = await db.query(
-            `SELECT id, name, email, password, auth_type FROM users WHERE email = ?`,
+            `SELECT id, name, email, password, role FROM users WHERE email = ?`,
             [email]
         );
 
@@ -2056,9 +2148,7 @@ const handleLogin = async (req, res) => {
         const token = jwt.sign({
             userId: user.id,
             email: user.email
-        }, JWT_SECRET, {
-            expiresIn: '1h'
-        });
+        }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
 
         res.json({
             success: true,
@@ -2067,7 +2157,8 @@ const handleLogin = async (req, res) => {
             user: {
                 id: user.id,
                 name: user.name,
-                email: user.email
+                email: user.email,
+                role: user.role
             }
         });
     } catch (error) {
@@ -2099,6 +2190,24 @@ const verifyToken = (req, res, next) => {
             success: false,
             message: "Invalid token"
         });
+    }
+};
+
+// Issue a fresh JWT for an authenticated user (use before current token expires)
+const refreshToken = async (req, res) => {
+    try {
+        const user = req.user; // set by verifyToken
+        const token = jwt.sign({
+            userId: user.userId,
+            email: user.email
+        }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+
+        return res.json({
+            success: true,
+            token
+        });
+    } catch (error) {
+        return res.status(500).json({ success: false, message: 'Failed to refresh token' });
     }
 };
 
@@ -2925,6 +3034,7 @@ module.exports = {
     getAllMeetings,
     handleLogin,
     verifyToken,
+    refreshToken,
     getPoints,
     respondToMeetingInvite,
     getForwardedPointHistory,

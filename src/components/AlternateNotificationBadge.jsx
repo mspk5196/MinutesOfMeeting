@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Badge, IconButton, Menu, MenuItem, Typography, Divider, Box } from '@mui/material';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
-import axios from 'axios';
+import { api } from '../utils/apiClient';
 
 /**
  * AlternateNotificationBadge - Shows a badge with count of pending alternate requests
@@ -26,8 +26,8 @@ function AlternateNotificationBadge() {
   const fetchPendingCount = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get(
-        'http://localhost:5000/api/meetings/alternate-request/my-requests?status=pending',
+      const response = await api.get(
+        '/api/meetings/alternate-request/my-requests?status=pending',
         {
           headers: {
             Authorization: `Bearer ${token}`

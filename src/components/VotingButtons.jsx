@@ -16,8 +16,9 @@ import {
     Stop,
     Visibility
 } from '@mui/icons-material';
-import axios from 'axios';
+import { api } from '../utils/apiClient';
 import VoteDetailsModal from './VoteDetailsModal';
+import { useSubmitGuard } from '../hooks/useSubmitGuard';
 
 
 const VotingButtons = ({ 
@@ -30,7 +31,8 @@ const VotingButtons = ({
     compact = true 
 }) => {
     const [loading, setLoading] = useState(false);
-    const [modalOpen, setModalOpen] = useState(false); // ✅ Fixed: Start with false
+    const [modalOpen, setModalOpen] = useState(false);
+    const { isSubmitting, executeSubmit } = useSubmitGuard(1000);
 
 
     const voting = votingData || {
@@ -62,14 +64,14 @@ const VotingButtons = ({
     //     fullVotingData: voting
     // });
 
-    const submitVote = async (voteType) => {
+    const submitVote = executeSubmit(async (voteType) => {
        if (!voting.voting_active) return;
 
 
         setLoading(true);
         try {
             const token = localStorage.getItem('token');
-            const response = await axios.post('http://localhost:5000/api/voting/submit', {
+            const response = await api.post('/api/voting/submit', {
                 pointId,
                 voteType
             }, {
@@ -97,7 +99,7 @@ const VotingButtons = ({
         } finally {
             setLoading(false);
         }
-    };
+    });
 
 
     const toggleVoting = async () => {
@@ -109,7 +111,7 @@ const VotingButtons = ({
             const token = localStorage.getItem('token');
             const endpoint = voting.voting_active ? 'end-session' : 'start-session';
             
-            const response = await axios.post(`http://localhost:5000/api/voting/${endpoint}`, {
+            const response = await api.post(`/api/voting/${endpoint}`, {
                 pointId
             }, {
                 headers: {
@@ -157,12 +159,13 @@ const VotingButtons = ({
 
                     {/* Show voting buttons for members - active when voting session is running */}
                     {(voting.voting_active || (!isAdmin && meetingStatus === 'in_progress')) && (
-                        <ButtonGroup size="small" disabled={loading || !voting.voting_active}>
+                        <ButtonGroup size="small" disabled={loading || isSubmitting || !voting.voting_active}>
                             <Tooltip title={voting.voting_active ? "Vote For" : "Voting not started yet"}>
                                 <Button
                                     variant={voting.user_vote === 'for' ? 'contained' : 'outlined'}
                                     color="success"
                                     onClick={() => submitVote('for')}
+                                    disabled={loading || isSubmitting || !voting.voting_active}
                                     sx={{ 
                                         minWidth: 'auto', 
                                         px: 1,
@@ -178,6 +181,7 @@ const VotingButtons = ({
                                     variant={voting.user_vote === 'against' ? 'contained' : 'outlined'}
                                     color="error"
                                     onClick={() => submitVote('against')}
+                                    disabled={loading || isSubmitting || !voting.voting_active}
                                     sx={{ 
                                         minWidth: 'auto', 
                                         px: 1,

@@ -127,8 +127,8 @@ export default function Cmeeting({ onBack }) {
       console.log('Sending meeting data:', JSON.stringify(meetingData, null, 2));
 
       // Call the API to create the meeting
-      const response = await axios.post(
-        'http://localhost:5000/api/meetings/create',
+      const response = await api.post(
+        '/api/meetings/create',
         meetingData,
         {
           headers: {
@@ -154,8 +154,8 @@ export default function Cmeeting({ onBack }) {
           try {
             // First we need to get the pointId from the backend
             // We query the points for this meeting to find the one matching our point text
-            const pointsResponse = await axios.get(
-              `http://localhost:5000/api/meetings/${meetingId}/points`,
+            const pointsResponse = await api.get(
+              `/api/meetings/${meetingId}/points`,
               {
                 headers: {
                   'Authorization': `Bearer ${token}`
@@ -174,8 +174,8 @@ export default function Cmeeting({ onBack }) {
             }
 
             // Now assign responsibility
-            const responsibilityResponse = await axios.post(
-              'http://localhost:5000/api/meetings/assign-responsibility',
+            const responsibilityResponse = await api.post(
+              '/api/meetings/assign-responsibility',
               {
                 pointId: pointData.id,
                 userId: point.responsibility[0].id
@@ -462,7 +462,7 @@ export default function Cmeeting({ onBack }) {
           return;
         }
 
-        const response = await axios.get('http://localhost:5000/api/templates/users', {
+        const response = await api.get('/api/templates/users', {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -634,7 +634,7 @@ export default function Cmeeting({ onBack }) {
         return;
       }
 
-      const response = await axios.get(`http://localhost:5000/api/templates/${backendId}`, {
+      const response = await api.get(`/api/templates/${backendId}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }

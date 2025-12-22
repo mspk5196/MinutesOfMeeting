@@ -1,7 +1,5 @@
 const express = require('express');
 const bodyParser = require('body-parser');
-const session = require('express-session');
-const passport = require('./config/passport'); // Import from your config
 const cors = require('cors');
 const templateRoutes = require('./routes/templateRoutes');
 const meetingRoutes = require('./routes/meetingRoutes');
@@ -17,19 +15,10 @@ const app = express();
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-app.use(cors());
-
-app.use(session({
-    secret: process.env.SESSION_SECRET || 'your-session-secret',
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-        secure: process.env.NODE_ENV === 'production',
-        maxAge: 24 * 60 * 60 * 1000 // 24 hours
-    }
+app.use(cors({
+    origin: process.env.CLIENT_URL || 'http://localhost:5173',
+    credentials: true
 }));
-
-app.use(passport.initialize());
 
 const authRoutes = require('./routes/authRoutes');
 app.use('/auth', authRoutes);

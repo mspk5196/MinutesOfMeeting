@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/Database.css';
-import axios from 'axios';
+import { api } from '../utils/apiClient';
 
 export default function Template() {
     const [templates, setTemplates] = useState([]);
@@ -33,7 +33,7 @@ export default function Template() {
                 return;
             }
 
-            const response = await axios.get('http://localhost:5000/api/templates/list', {
+const response = await api.get('/api/templates/list', {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -111,7 +111,7 @@ export default function Template() {
                 const token = localStorage.getItem('token');
                 if (!token) return;
                 
-                const response = await axios.get('http://localhost:5000/api/templates/categories', {
+                const response = await api.get('/api/templates/categories', {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
@@ -447,8 +447,8 @@ export default function Template() {
             
             if (template.backendId) {
                 try {
-                    await axios.delete(
-                        `http://localhost:5000/api/templates/delete/${template.backendId}`, 
+                    await api.delete(
+                        `/api/templates/delete/${template.backendId}`, 
                         {
                             headers: { Authorization: `Bearer ${token}` }
                         }
@@ -464,7 +464,7 @@ export default function Template() {
             
             // Fallback: Get fresh template list and find the matching template
             try {
-                const response = await axios.get('http://localhost:5000/api/templates/list', {
+                const response = await api.get('/api/templates/list', {
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 
@@ -485,8 +485,8 @@ export default function Template() {
                 }
                 
                 // Delete the template using the found ID
-                await axios.delete(
-                    `http://localhost:5000/api/templates/delete/${backendTemplate.id}`, 
+                await api.delete(
+                    `/api/templates/delete/${backendTemplate.id}`, 
                     {
                         headers: { Authorization: `Bearer ${token}` }
                     }

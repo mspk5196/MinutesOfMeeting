@@ -9,7 +9,7 @@ import noTodoImage from "../assets/nomeetings.png";
 import profileImage from "../assets/profileimage.png";
 import SearchIcon from '@mui/icons-material/Search';
 import FilterListIcon from '@mui/icons-material/FilterList';
-import axios from 'axios';
+import { api } from '../utils/apiClient';
 import customParseFormat from "dayjs/plugin/customParseFormat";
 import { formatInTimeZone } from "date-fns-tz";
 // dayjs.extend(customParseFormat);
@@ -31,7 +31,7 @@ const Dashboard = () => {
   const fetchMeetings = async () => {
     try {
       const token = localStorage.getItem('token'); // Ensure token is saved at login
-      const response = await axios.get('http://localhost:5000/api/meetings/get-user-meetings', {
+      const response = await api.get('/api/meetings/get-user-meetings', {
         headers: {
           Authorization: `Bearer ${token}`,
         }

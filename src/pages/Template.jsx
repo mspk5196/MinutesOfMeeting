@@ -8,7 +8,8 @@ import bheader from "../assets/bannariammanheader.png";
 import '../styles/Template.css';
 import RepeatOverlay from '../components/RepeatOverlay';
 import CloseIcon from "@mui/icons-material/Close";
-import axios from 'axios';
+import { api, apiUrl } from '../utils/apiClient';
+import { useSubmitGuard } from '../hooks/useSubmitGuard';
 
 const overlayStyles = {
   position: 'fixed',
@@ -27,6 +28,7 @@ export default function Template() {
   const navigate = useNavigate();
   const [isEditMode, setIsEditMode] = useState(false);
   const [editData, setEditData] = useState(null);
+  const { isSubmitting, executeSubmit } = useSubmitGuard(2000);
   const [meetingDetails, setMeetingDetails] = useState({
     title: '',
     description: '',
@@ -71,7 +73,7 @@ export default function Template() {
           return;
         }
 
-        const response = await fetch('http://localhost:5000/api/templates/users', {
+        const response = await fetch(apiUrl('/api/templates/users'), {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -653,8 +655,7 @@ export default function Template() {
       }
 
       // Fetch the template details using the backend ID
-      console.log(`Making API request to: http://localhost:5000/api/templates/${backendId}`);
-      const response = await axios.get(`http://localhost:5000/api/templates/${backendId}`, {
+      const response = await api.get(`/api/templates/${backendId}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -762,7 +763,7 @@ export default function Template() {
   };
 
   // Update handleCreateTemplate to handle both create and update
-  const handleCreateTemplate = async () => {
+  const handleCreateTemplate = executeSubmit(async () => {
     try {
       // Format the data according to the backend API requirements
       const templateData = {
@@ -805,13 +806,11 @@ export default function Template() {
 
       if (isEditMode && editData && editData.backendId) {
         // If editing, update the template using the backend ID
-        const updateUrl = `http://localhost:5000/api/templates/update/${editData.backendId}`;
         console.log(`Updating template with backend ID: ${editData.backendId}`);
-        console.log(`Making PUT request to: ${updateUrl}`);
         console.log('Update payload:', JSON.stringify(templateData, null, 2));
 
         try {
-          response = await axios.put(updateUrl, templateData, {
+          response = await api.put(`/api/templates/update/${editData.backendId}`, templateData, {
             headers: {
               'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json'
@@ -846,7 +845,7 @@ export default function Template() {
               console.log('Trying again with simplified data:', simpleTemplateData);
 
               // Try again with simplified data
-              response = await axios.put(updateUrl, simpleTemplateData, {
+              response = await api.put(`/api/templates/update/${editData.backendId}`, simpleTemplateData, {
                 headers: {
                   'Authorization': `Bearer ${token}`,
                   'Content-Type': 'application/json'
@@ -863,7 +862,7 @@ export default function Template() {
       } else {
         // If creating, create a new template
         console.log('Creating new template');
-        response = await axios.post('http://localhost:5000/api/templates/create', templateData, {
+        response = await api.post('/api/templates/create', templateData, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
@@ -895,7 +894,7 @@ export default function Template() {
         alert(`Failed to ${isEditMode ? 'update' : 'create'} template: ${error.message}. Please try again.`);
       }
     }
-  };
+  });
 
   // Update success notification component for both create and edit modes
   const TemplateSuccessNotification = () => (
@@ -1460,8 +1459,8 @@ export default function Template() {
           <button className="cm-btn cm-draft-btn">
             <i className="fi fi-rr-document"></i> Save as Draft
           </button>
-          <button className="cm-btn cm-create-btn" onClick={handleCreateTemplate}>
-            <i className="fi fi-rr-confetti"></i> {isEditMode ? 'Update Template' : 'Create Template'}
+          <button className="cm-btn cm-create-btn" onClick={handleCreateTemplate} disabled={isSubmitting}>
+            <i className="fi fi-rr-confetti"></i> {isSubmitting ? 'Saving...' : (isEditMode ? 'Update Template' : 'Create Template')}
           </button>
         </div>
       </div>

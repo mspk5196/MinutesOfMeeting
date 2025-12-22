@@ -11,7 +11,7 @@ import {
   Stack
 } from '@mui/material';
 import { format } from 'date-fns';
-import axios from 'axios';
+import { api } from '../utils/apiClient';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CancelIcon from '@mui/icons-material/Cancel';
@@ -34,10 +34,10 @@ function AlternateRequestNotification() {
       console.log('========== ALTERNATE REQUEST FETCH START ==========');
       console.log('1. Token exists:', !!token);
       console.log('2. Token (first 20 chars):', token?.substring(0, 20));
-      console.log('3. Making request to:', 'http://localhost:5000/api/meetings/alternate-request/my-requests?status=pending');
+      console.log('3. Making request to: /api/meetings/alternate-request/my-requests?status=pending');
       
-      const response = await axios.get(
-        'http://localhost:5000/api/meetings/alternate-request/my-requests?status=pending',
+      const response = await api.get(
+        '/api/meetings/alternate-request/my-requests?status=pending',
         {
           headers: {
             Authorization: `Bearer ${token}`
@@ -81,8 +81,8 @@ function AlternateRequestNotification() {
       setActionLoading(requestId);
       const token = localStorage.getItem('token');
       
-      const res = await axios.post(
-        'http://localhost:5000/api/meetings/alternate-request/respond',
+      const res = await api.post(
+        '/api/meetings/alternate-request/respond',
         {
           requestId,
           response // 'accept' or 'reject'
