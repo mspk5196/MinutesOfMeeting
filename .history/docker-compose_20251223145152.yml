@@ -10,7 +10,7 @@ services:
     ports:
       - "80:80"
     environment:
-      - VITE_API_URL=http://localhost:5000
+      - VITE_API_URL=http://localhost:7000
     depends_on:
       - backend
     restart: unless-stopped
@@ -24,10 +24,10 @@ services:
       dockerfile: Dockerfile
     container_name: bitmeetings-backend
     ports:
-      - "5000:5000"
+      - "7000:7000"
     environment:
       - NODE_ENV=production
-      - PORT=5000
+      - PORT=7000
       # Add your environment variables here
       - DB_HOST=localhost
       - DB_USER=bitmeetings_user
