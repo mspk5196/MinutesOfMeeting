@@ -21,6 +21,12 @@ app.use(cors({
 }));
 
 const authRoutes = require('./routes/authRoutes');
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+    res.status(200).json({ status: 'OK', timestamp: new Date().toISOString() });
+});
+
 app.use('/auth', authRoutes);
 app.use('/api/templates', templateRoutes);
 app.use('/api/meetings', meetingRoutes);
