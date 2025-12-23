@@ -29,12 +29,12 @@ services:
       - NODE_ENV=production
       - PORT=5000
       # Add your environment variables here
-      - DB_HOST=127.0.0.1
+      - DB_HOST=bitmeetings-mysql
       - DB_USER=bitmeetings_user
       - DB_PASSWORD=bitmeetings123@
       - DB_NAME=bitmeetings_db
-      - JWT_SECRET=your_jwt_secret
-      - GOOGLE_CLIENT_ID=your_google_client_id
+      - JWT_SECRET=991d77fe2b44271e59b564a39bf3635c97d1ab62106f869a3c336dfb7e876b5d09cbffcc9df1997976407ff084e64dc382b4aad31aee002c9eeb83e3fbcb7792
+      - GOOGLE_CLIENT_ID=563618874909-ilbp07v0eqhl6j234d4g35uj16g4iqr6.apps.googleusercontent.com
     volumes:
       - ./backend/uploads:/app/uploads
     depends_on:

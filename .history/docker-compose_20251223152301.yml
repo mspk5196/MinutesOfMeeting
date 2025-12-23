@@ -29,7 +29,7 @@ services:
       - NODE_ENV=production
       - PORT=5000
       # Add your environment variables here
-      - DB_HOST=127.0.0.1
+      - DB_HOST=bitmeetings-mysql
       - DB_USER=bitmeetings_user
       - DB_PASSWORD=bitmeetings123@
       - DB_NAME=bitmeetings_db
