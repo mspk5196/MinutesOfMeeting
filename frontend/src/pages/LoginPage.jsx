@@ -49,7 +49,7 @@ const LoginPage = ({ onLoginSuccess }) => {
     setErrorMessage('');
     
     try {
-      const backendUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+      const backendUrl = import.meta.env.VITE_API_BASE_URL || 'http://192.168.10.5:5000';
       window.location.href = `${backendUrl}/auth/google`;
     } catch (error) {
       notificationManager.error('Failed to initiate Google sign-in');

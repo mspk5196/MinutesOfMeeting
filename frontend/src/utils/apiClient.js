@@ -4,7 +4,7 @@ import axios from 'axios';
 export const API_BASE_URL =
   (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_BASE_URL) ||
   (typeof window !== 'undefined' && window.__API_BASE_URL__) ||
-  'http://localhost:5000';
+  'http://192.168.10.5:5000';
 
 export const apiUrl = (path = '') => {
   if (!path) return API_BASE_URL;
