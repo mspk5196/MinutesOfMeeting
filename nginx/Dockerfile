@@ -1,4 +1,7 @@
 FROM nginx:alpine
 
-# Copy the custom Nginx configuration into the container
+# Copy the base Nginx configuration
 COPY nginx.conf /etc/nginx/nginx.conf
+
+# Copy all site / virtual-host configurations
+COPY nginx/conf.d/*.conf /etc/nginx/conf.d/

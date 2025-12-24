@@ -7,24 +7,11 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     container_name: bitmeetings-frontend
-    environment:
-      - VITE_API_URL=/api/
-    depends_on:
-      - backend
-    restart: unless-stopped
-    networks:
-      - bitmeetings-network
-
-  # Nginx reverse proxy
-  nginx:
-    build:
-      context: .
-      dockerfile: nginx/Dockerfile
-    container_name: bitmeetings-nginx
     ports:
-      - "80:80"
+      - "8080:80"
+    environment:
+      - VITE_API_URL=http://localhost:5000/
     depends_on:
-      - frontend
       - backend
     restart: unless-stopped
     networks:
