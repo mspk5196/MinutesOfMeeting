@@ -10,7 +10,7 @@ services:
     ports:
       - "8080:80"
     environment:
-      - VITE_API_URL=http://localhost:5000/
+      - VITE_API_URL=/api/
     depends_on:
       - backend
     restart: unless-stopped
