@@ -24,7 +24,7 @@ const getAllReports = async (req, res) => {
         `;
 
         const [meetings] = await db.query(query);
-        console.log('Fetched meetings:', meetings); // Add this line for debugging
+        // console.log('Fetched meetings:', meetings); // Add this line for debugging
 
         if (!Array.isArray(meetings)) {
             throw new Error('Invalid database response format');
@@ -43,7 +43,7 @@ const getAllReports = async (req, res) => {
             };
         }).filter(report => report !== null); // Remove any null entries
 
-        console.log('Processed reports:', reports); // Add this line for debugging
+        // console.log('Processed reports:', reports); // Add this line for debugging
 
         if (reports.length === 0) {
             return res.status(200).json([]); // Return empty array if no reports

@@ -61,7 +61,7 @@ const Dashboard = () => {
             meeting_status: meeting.meeting_status
           })
         });
-        console.log(formattedMeetings)
+        // console.log(formattedMeetings)
         // console.log(`${formatInTimeZone(new Date(formattedMeetings.start_time), 'UTC', 'dd/MM/yyyy')}`)
 
         setMeetings(formattedMeetings);

@@ -22,7 +22,7 @@ function AlternateRequestNotification() {
   const [actionLoading, setActionLoading] = useState(null);
 
   useEffect(() => {
-    console.log('AlternateRequestNotification component mounted!');
+    // console.log('AlternateRequestNotification component mounted!');
     fetchAlternateRequests();
   }, []);
 
@@ -31,10 +31,10 @@ function AlternateRequestNotification() {
       setLoading(true);
       const token = localStorage.getItem('token');
       
-      console.log('========== ALTERNATE REQUEST FETCH START ==========');
-      console.log('1. Token exists:', !!token);
-      console.log('2. Token (first 20 chars):', token?.substring(0, 20));
-      console.log('3. Making request to: /api/meetings/alternate-request/my-requests?status=pending');
+      // console.log('========== ALTERNATE REQUEST FETCH START ==========');
+      // console.log('1. Token exists:', !!token);
+      // console.log('2. Token (first 20 chars):', token?.substring(0, 20));
+      // console.log('3. Making request to: /api/meetings/alternate-request/my-requests?status=pending');
       
       const response = await api.get(
         '/api/meetings/alternate-request/my-requests?status=pending',
@@ -45,24 +45,24 @@ function AlternateRequestNotification() {
         }
       );
 
-      console.log('4. Response received:', {
-        status: response.status,
-        statusText: response.statusText,
-        data: response.data
-      });
-      console.log('5. Success flag:', response.data.success);
-      console.log('6. Data count:', response.data.count);
-      console.log('7. Data array:', response.data.data);
-      console.log('8. Data array length:', response.data.data?.length);
+      // console.log('4. Response received:', {
+      //   status: response.status,
+      //   statusText: response.statusText,
+      //   data: response.data
+      // });
+      // console.log('5. Success flag:', response.data.success);
+      // console.log('6. Data count:', response.data.count);
+      // console.log('7. Data array:', response.data.data);
+      // console.log('8. Data array length:', response.data.data?.length);
       
       if (response.data.success) {
-        console.log('9. Setting requests state with:', response.data.data);
+        // console.log('9. Setting requests state with:', response.data.data);
         setRequests(response.data.data);
       } else {
-        console.log('9. No success flag - setting empty array');
+        // console.log('9. No success flag - setting empty array');
         setRequests([]);
       }
-      console.log('========== ALTERNATE REQUEST FETCH END ==========');
+      // console.log('========== ALTERNATE REQUEST FETCH END ==========');
     } catch (error) {
       console.error('========== ERROR FETCHING ALTERNATE REQUESTS ==========');
       console.error('Error object:', error);

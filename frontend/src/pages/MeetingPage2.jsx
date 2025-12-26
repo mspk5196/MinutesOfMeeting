@@ -28,15 +28,15 @@ const ForwardingForm = ({ onClose, selectedAction: initialAction, remarks, point
 
   async function ForwardPoint(pointId, templateId, forwardType, forwardDecision, adminRemarks) {
     const token = localStorage.getItem('token');
-    console.log(token)
-    console.log({
-      pointId,
-      templateId,
-      forwardType,
-      forwardDecision,
-      adminRemarks
-    })
-    console.log(forwardDecision)
+    // console.log(token)
+    // console.log({
+    //   pointId,
+    //   templateId,
+    //   forwardType,
+    //   forwardDecision,
+    //   adminRemarks
+    // })
+    // console.log(forwardDecision)
     if (forwardType != 'SPECIFIC_MEETING') {
       templateId = null;
     }
@@ -71,8 +71,8 @@ const ForwardingForm = ({ onClose, selectedAction: initialAction, remarks, point
         }
       });
 
-      console.log(selectedPoint.DecisionIndex, selectedAction)
-      console.log(selectedPoint.SubPointIndex)
+      // console.log(selectedPoint.DecisionIndex, selectedAction)
+      // console.log(selectedPoint.SubPointIndex)
       if (selectedPoint.SubPointIndex !== undefined && selectedPoint.SubPointIndex !== null) {
         handleChangeStatus(selectedPoint.DecisionIndex, selectedAction, true, selectedPoint.SubPointIndex);
       } else {
@@ -212,7 +212,7 @@ const ForwardingForm = ({ onClose, selectedAction: initialAction, remarks, point
                   onChange={(event, value) => {
                     if (value) {
                       setSelectedTemplate(value.id)
-                      console.log("Selected Template ID:", value.id);
+                      // console.log("Selected Template ID:", value.id);
                     }
                   }}
                 />
@@ -244,7 +244,7 @@ const ForwardingForm = ({ onClose, selectedAction: initialAction, remarks, point
             textTransform: "none",
             width: "130px",
           }}
-          onClick={() => { ForwardPoint(pointId, selectedTemplate, selectedOption, selectedAction, remarks); console.log(selectedAction, selectedOption, remarks, selectedTemplate) }}
+          onClick={() => { ForwardPoint(pointId, selectedTemplate, selectedOption, selectedAction, remarks);   }}
         >
           Save & Next
         </Button>

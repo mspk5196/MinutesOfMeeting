@@ -64,7 +64,7 @@ export default function Cmeeting({ onBack }) {
         setSelectedMeeting(templateData.name);
       }
     }
-    console.log(templateData)
+    // console.log(templateData)
     const fetchForwardedPoints = async () => {
       var token = localStorage.getItem('token')
       try {
@@ -78,7 +78,7 @@ export default function Cmeeting({ onBack }) {
           }
         });
         //setMeetingAgenda(response.data.data.points);
-        console.log("sdfdsf", response.data)
+        // console.log("sdfdsf", response.data)
         setForwardedPoints(response.data.points)
       } catch (err) {
         console.error(err)
@@ -173,7 +173,7 @@ export default function Cmeeting({ onBack }) {
       const formatDate = (date) => {
         return date.toISOString().split('.')[0];  // Remove milliseconds
       };
-      console.log(selectedDateTime)
+      // console.log(selectedDateTime)
 
       const [datePart, timePart] = selectedDateTime.split(" && ");
       const [startTimeStr, endTimeStr] = timePart.split(" - ");
@@ -184,8 +184,8 @@ export default function Cmeeting({ onBack }) {
       const startFormatted = start.format("YYYY-MM-DD HH:mm:ss");
       const endFormatted = end.format("YYYY-MM-DD HH:mm:ss");
 
-      console.log("start_time:", startFormatted);
-      console.log("end_time:", endFormatted);
+      // console.log("start_time:", startFormatted);
+      // console.log("end_time:", endFormatted);
 
       const meetingData = {
         name: selectedMeeting || "Untitled Meeting",
@@ -211,7 +211,7 @@ export default function Cmeeting({ onBack }) {
         }))
       };
 
-      console.log('Sending meeting data:', JSON.stringify(meetingData, null, 2));
+      // console.log('Sending meeting data:', JSON.stringify(meetingData, null, 2));
 
       // Call the API to create the meeting
       const response = await api.post(
@@ -225,13 +225,13 @@ export default function Cmeeting({ onBack }) {
         }
       );
 
-      console.log('Meeting created successfully:', response.data);
+      // console.log('Meeting created successfully:', response.data);
 
       // Now assign responsibilities for each discussion point that has responsibility assigned
       const meetingId = response.data.meetingId;
 
       // Prepare an array of responsibility assignment promises
-      console.log(discussionPoints)
+      // console.log(discussionPoints)
 
       // Combine discussion points and approved forwarded points for responsibility assignment
       const allPointsWithResponsibility = [
@@ -251,7 +251,7 @@ export default function Cmeeting({ onBack }) {
 
       const responsibilityPromises = allPointsWithResponsibility
         .map(async (point, index) => {
-          console.log(point, index)
+          // console.log(point, index)
           try {
             // First we need to get the pointId from the backend
             // We query the points for this meeting to find the one matching our point text
@@ -295,7 +295,7 @@ export default function Cmeeting({ onBack }) {
               }
             );
 
-            console.log(`Responsibility assigned for point ${index + 1}:`, responsibilityResponse.data);
+            // console.log(`Responsibility assigned for point ${index + 1}:`, responsibilityResponse.data);
             return responsibilityResponse.data;
           } catch (error) {
             console.error(`Error assigning responsibility for point ${index + 1}:`, error);
@@ -386,7 +386,7 @@ export default function Cmeeting({ onBack }) {
     setSelectedDate((prev) => ({ ...prev, [index]: date.format("YYYY-MM-DD") }));
     var discussionPointsNew = discussionPoints;
     discussionPointsNew[index].deadline = date.format("YYYY-MM-DD");
-    console.log(discussionPointsNew)
+    // console.log(discussionPointsNew)
     setDiscussionPoints(discussionPointsNew)
     setOpenDateIndex(null);
   };
@@ -827,7 +827,7 @@ export default function Cmeeting({ onBack }) {
   const handleApprove = async (pointId, isApproved) => {
     if (isApproved) {
       // Handle approval: update backend and mark approved in UI
-      console.log("Approving point:", pointId);
+      // console.log("Approving point:", pointId);
       const token = localStorage.getItem('token');
   
       try {
@@ -840,7 +840,7 @@ export default function Cmeeting({ onBack }) {
             }
           }
         );
-        console.log("Approval Response:", response.data);
+        // console.log("Approval Response:", response.data);
   
         // Mark the point as approved (make button green)
         setForwardedPoints(prev =>
@@ -854,7 +854,7 @@ export default function Cmeeting({ onBack }) {
   
     } else {
       // Remove the point if not approved
-      console.log("Removing point (Not Approved):", pointId);
+      // console.log("Removing point (Not Approved):", pointId);
       setForwardedPoints(prev => prev.filter(point => point.point_id !== pointId));
     }
   };
@@ -887,7 +887,7 @@ export default function Cmeeting({ onBack }) {
         }
       );
       
-      console.log("Point History:", response.data);
+      // console.log("Point History:", response.data);
       setSelectedPointHistory(response.data.history || []);
     } catch (err) {
       console.error("Error fetching point history:", err);

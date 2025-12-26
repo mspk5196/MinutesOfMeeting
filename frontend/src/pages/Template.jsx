@@ -592,7 +592,7 @@ export default function Template() {
     if (storedEditData) {
       try {
         const parsedData = JSON.parse(storedEditData);
-        console.log('Parsed edit data from localStorage:', parsedData);
+        // console.log('Parsed edit data from localStorage:', parsedData);
         setEditData(parsedData);
         setIsEditMode(true);
 
@@ -643,7 +643,7 @@ export default function Template() {
       return;
     }
 
-    console.log(`Fetching template details for ID: ${backendId}`);
+    // console.log(`Fetching template details for ID: ${backendId}`);
 
     try {
       const token = localStorage.getItem('token');
@@ -661,23 +661,23 @@ export default function Template() {
         }
       });
 
-      console.log('Full API response:', response);
-      console.log('Response data:', response.data);
+      // console.log('Full API response:', response);
+      // console.log('Response data:', response.data);
 
       if (response.data) {
         const template = response.data;
-        console.log('Template details from API:', template);
-        console.log('Response data structure:', {
-          name: template.name,
-          description: template.description,
-          repeat_type: template.repeat_type,
-          priority_type: template.priority_type,
-          points: template.points,
-          roles: template.roles
-        });
+        // console.log('Template details from API:', template);
+        // console.log('Response data structure:', {
+        //   name: template.name,
+        //   description: template.description,
+        //   repeat_type: template.repeat_type,
+        //   priority_type: template.priority_type,
+        //   points: template.points,
+        //   roles: template.roles
+        // });
 
         // Log current meeting details before update
-        console.log('Current meeting details before update:', meetingDetails);
+        // console.log('Current meeting details before update:', meetingDetails);
 
         // Update meeting details with all fields from the API response
         setMeetingDetails(prev => {
@@ -691,33 +691,33 @@ export default function Template() {
             venue: template.venue_id || prev.venue
           };
 
-          console.log('Updating meeting details with:', updates);
+          // console.log('Updating meeting details with:', updates);
           return { ...prev, ...updates };
         });
 
         // Set repeat value if it exists in the API response
         if (template.repeat_type) {
-          console.log(`Setting repeat value: ${template.repeat_type}`);
+          // console.log(`Setting repeat value: ${template.repeat_type}`);
           setRepeatValue(template.repeat_type);
         } else {
-          console.log('No repeat_type found in response');
+          // console.log('No repeat_type found in response');
         }
 
         // Set points from the API response
         if (template.points && Array.isArray(template.points)) {
-          console.log(`Setting ${template.points.length} points from API:`, template.points);
+          // console.log(`Setting ${template.points.length} points from API:`, template.points);
           const formattedPoints = template.points.map((point, index) => ({
             sno: point.sno || String(index + 1).padStart(2, '0'),
             point: point.point || ''
           }));
           setPoints(formattedPoints);
         } else {
-          console.log('No points found in response or not an array:', template.points);
+          // console.log('No points found in response or not an array:', template.points);
         }
 
         // Set roles from the API response
         if (template.roles && Array.isArray(template.roles)) {
-          console.log(`Setting ${template.roles.length} roles from API:`, template.roles);
+          // console.log(`Setting ${template.roles.length} roles from API:`, template.roles);
           const formattedRoles = template.roles.map(role => {
             // API returns role with members array directly
             const memberObjects = role.members.map(member => {
@@ -745,7 +745,7 @@ export default function Template() {
             setRoles(formattedRoles);
           }
         } else {
-          console.log('No roles found in response or not an array:', template.roles);
+          // console.log('No roles found in response or not an array:', template.roles);
         }
       } else {
         console.error('No data in API response');
@@ -791,7 +791,7 @@ export default function Template() {
         status: 'Active'
       };
 
-      console.log('Submitting template data:', templateData);
+      // console.log('Submitting template data:', templateData);
 
       // Get the token from localStorage
       const token = localStorage.getItem('token');
@@ -806,8 +806,8 @@ export default function Template() {
 
       if (isEditMode && editData && editData.backendId) {
         // If editing, update the template using the backend ID
-        console.log(`Updating template with backend ID: ${editData.backendId}`);
-        console.log('Update payload:', JSON.stringify(templateData, null, 2));
+        // console.log(`Updating template with backend ID: ${editData.backendId}`);
+        // console.log('Update payload:', JSON.stringify(templateData, null, 2));
 
         try {
           response = await api.put(`/api/templates/update/${editData.backendId}`, templateData, {
@@ -816,7 +816,7 @@ export default function Template() {
               'Content-Type': 'application/json'
             }
           });
-          console.log('Template updated successfully:', response.data);
+          // console.log('Template updated successfully:', response.data);
         } catch (updateError) {
           console.error('Update request failed:', updateError);
 
@@ -842,7 +842,7 @@ export default function Template() {
                 status: 'Active'
               };
 
-              console.log('Trying again with simplified data:', simpleTemplateData);
+              // console.log('Trying again with simplified data:', simpleTemplateData);
 
               // Try again with simplified data
               response = await api.put(`/api/templates/update/${editData.backendId}`, simpleTemplateData, {
@@ -851,7 +851,7 @@ export default function Template() {
                   'Content-Type': 'application/json'
                 }
               });
-              console.log('Template updated after simplification:', response.data);
+              // console.log('Template updated after simplification:', response.data);
             } else {
               throw updateError; // Re-throw if it's not a 500 error
             }
@@ -861,14 +861,14 @@ export default function Template() {
         }
       } else {
         // If creating, create a new template
-        console.log('Creating new template');
+        // console.log('Creating new template');
         response = await api.post('/api/templates/create', templateData, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
           }
         });
-        console.log('Template created:', response.data);
+        // console.log('Template created:', response.data);
       }
 
       // Show success notification

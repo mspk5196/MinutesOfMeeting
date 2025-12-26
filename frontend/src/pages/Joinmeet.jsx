@@ -154,7 +154,7 @@ export default function JoinMeet() {
                 const response = await api.get(
                     `/api/meetings/get-attendance-records/${meetingData.id}`
                 );
-                console.log(response.data.data)
+                // console.log(response.data.data)
                 setAttendanceRecords(response.data.data);
             } catch (err) {
                 console.error(err)
@@ -180,7 +180,7 @@ export default function JoinMeet() {
                         }
                     });
                 setMeetingAgenda(response.data.data.points);
-                console.log(response.data.data)
+                // console.log(response.data.data)
             } catch (err) {
                 console.error(err)
             }
@@ -191,7 +191,7 @@ export default function JoinMeet() {
                 const response = await api.get(
                     `/api/meetings/get-attendance-records/${meetingData.id}`
                 );
-                console.log(response.data.data)
+                // console.log(response.data.data)
                 setAttendanceRecords(response.data.data);
             } catch (err) {
                 console.error(err)
@@ -250,7 +250,7 @@ export default function JoinMeet() {
                             : point
                     )
                 );
-                console.log('Todo updated successfully:', response.data);
+                // console.log('Todo updated successfully:', response.data);
             } else {
                 alert('Failed to update todo. Please try again.');
             }
@@ -296,7 +296,7 @@ export default function JoinMeet() {
 
             if (response.data && response.data.success !== false) {
                 setIsAccept(status === 'accept');
-                console.log('Meeting response saved:', response.data);
+                // console.log('Meeting response saved:', response.data);
             } else {
                 alert('Failed to save your response. Please try again.');
             }
@@ -342,7 +342,7 @@ export default function JoinMeet() {
 
             if (response.data && response.data.success !== false) {
                 setIsAccept(status === 'accept');
-                console.log('Meeting joined:', response.data);
+                // console.log('Meeting joined:', response.data);
             } else {
                 alert('Failed to join meeting. Please try again.');
             }
@@ -373,7 +373,7 @@ export default function JoinMeet() {
                 }
             );
 
-            console.log(response.data)
+            // console.log(response.data)
 
             if (response.data.accepted_status === 'accept') {
                 setIsAccept(true);
@@ -520,11 +520,11 @@ export default function JoinMeet() {
                 );
 
                 setVotingData(votingMap);
-                console.log('Fetched complete voting data:', votingMap);
+                // console.log('Fetched complete voting data:', votingMap);
                 
                 // Debug: Log voting_active states for each point
                 Object.entries(votingMap).forEach(([pointId, data]) => {
-                    console.log(`Point ${pointId} voting_active: ${data.voting_active}`);
+                    // console.log(`Point ${pointId} voting_active: ${data.voting_active}`);
                 });
             }
         } catch (error) {
@@ -630,7 +630,7 @@ export default function JoinMeet() {
                 }
             );
             
-            console.log("Point History:", response.data);
+            // console.log("Point History:", response.data);
             setSelectedPointHistory(response.data.history || []);
         } catch (err) {
             console.error("Error fetching point history:", err);
@@ -650,14 +650,14 @@ export default function JoinMeet() {
         setSelectedPointName("");
     };
 
-    console.log('Joinmeet Debug:', {
-        pointData,
-        meetingData,
-        isAdmin,
-        currentUser,
-        votingData,
-        onJoin
-    });
+    // console.log('Joinmeet Debug:', {
+    //     pointData,
+    //     meetingData,
+    //     isAdmin,
+    //     currentUser,
+    //     votingData,
+    //     onJoin
+    // });
 
     return (
         <>
@@ -1097,7 +1097,7 @@ export default function JoinMeet() {
                                         {pointData.map((point, index) => {
 
                                             const ForwardPointData = meetingAgenda.find(item => item.id === point.pointId);
-                                            console.log(ForwardPointData)
+                                            // console.log(ForwardPointData)
                                             if (ForwardPointData?.forward_info?.type == 'NIL') {
                                                 ForwardPointData.forward_info.text = ''
                                             }

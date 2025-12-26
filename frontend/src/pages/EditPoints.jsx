@@ -97,7 +97,7 @@ export default function EditPoints({ handleBack }) {
         }))
     );
 
-    console.log(points)
+    // console.log(points)
 
     const handleChange = (index, field, value) => {
         setPoints(prevPoints => {
@@ -129,7 +129,7 @@ export default function EditPoints({ handleBack }) {
             point_deadline: formatMySQLDateTime(point.point_deadline)
         }));
 
-        console.log(updatedPoints)
+        // console.log(updatedPoints)
 
         
         await api.post("/api/meetings/update-point", {points: updatedPoints}, {
@@ -166,21 +166,21 @@ export default function EditPoints({ handleBack }) {
     };
 
     useEffect(() => {
-        console.log("Points updated:", points);
+        // console.log("Points updated:", points);
     }, [points]);
 
     const approvePoint = async (pointId, approvedDecision, point, index) => {
         try {
             const token = localStorage.getItem('token')
             const sentobj = { pointId, approvedDecision }
-            console.log(point)
+            // console.log(point)
             if (point.todo || point.old_todo) {
                 const response = await api.post('/api/meetings/approve-point', sentobj, {
                     headers: {
                         Authorization: `Bearer ${token}`,
                     }
                 })
-                console.log(response.data)
+                // console.log(response.data)
                 if (approvedDecision == "APPROVED") {
                     handleStatusChange(index, "Approve")
                 }
@@ -201,7 +201,7 @@ export default function EditPoints({ handleBack }) {
         const updatedPoints = [...points];
         updatedPoints[index].status = newStatus;
         setPoints(updatedPoints);
-        console.log(updatedPoints)
+        // console.log(updatedPoints)
     };
 
     const allMembers = Object.values(meetingData.members).flatMap(roleMembers =>
@@ -249,12 +249,12 @@ export default function EditPoints({ handleBack }) {
         }
         var flag = 0;
         for (let i = 0; i < meetingDataPoints.points.length; i++) {
-            console.log(isRejected(meetingDataPoints.points[i].responsible_user.id))
+            // console.log(isRejected(meetingDataPoints.points[i].responsible_user.id))
             if (meetingDataPoints.points[i].status != "APPROVED" && !isRejected(meetingDataPoints.points[i].responsible_user.id)) {
                 flag = 1;
             }
         }
-        console.log(flag)
+        // console.log(flag)
         if (flag == 0) {
 
             const response = await api.post(`/api/meetings/start-meeting/`, { meetingId: id }, {
@@ -262,7 +262,7 @@ export default function EditPoints({ handleBack }) {
                     Authorization: `Bearer ${token}`,
                 }
             })
-            console.log(response.data)
+            // console.log(response.data)
 
             return true
         }
@@ -272,17 +272,17 @@ export default function EditPoints({ handleBack }) {
 
     const getRejectionReason = (userId) => {
         const record = rejectionRecords.find(r => r.user_id === userId);
-        console.log(record?.reason)
+        // console.log(record?.reason)
         return record ? record.reason : '';
     };
 
 
     useEffect(() => {
 
-        console.log(meetingData)
+        // console.log(meetingData)
         meetingData.points.forEach((point, index) => {
             var status = point.approved_by_admin;
-            console.log("status", status)
+            // console.log("status", status)
             if (status == "NOT APPROVED") {
                 status = "Not Approve"
             }
@@ -299,7 +299,7 @@ export default function EditPoints({ handleBack }) {
             try {
                 const res = await fetch(apiUrl(`/api/meetings/get-rejection-records/${meetingData.id}`));
                 const data = await res.json();
-                console.log("Rejection Records:", data);
+                // console.log("Rejection Records:", data);
 
                 setRejectionRecords(data.data);
             } catch (err) {
@@ -331,7 +331,7 @@ export default function EditPoints({ handleBack }) {
                 <Box sx={{ display: "flex", alignItems: "center", gap: 2, padding: "6px", backgroundColor: "white", borderRadius: "8px" }}>
                     <Button
                         variant="contained"
-                        onClick={() => { console.log('clocik'); submitPoints() }}
+                        onClick={() => {submitPoints() }}
                         disabled={isSubmittingPoints}
                         sx={{
                             borderRadius: '5px',

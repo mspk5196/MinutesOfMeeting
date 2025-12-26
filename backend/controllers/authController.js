@@ -29,7 +29,7 @@ const authController = {
             }
 
             const user = users[0];
-            console.log('User found:', !!user);
+            // console.log('User found:', !!user);
 
             // Verify password
             const isMatch = await bcrypt.compare(password, user.password);
@@ -38,7 +38,7 @@ const authController = {
                     success: false,
                     message: 'Invalid credentials'
                 });
-                console.log('Password match:', isMatch);
+                // console.log('Password match:', isMatch);
             }
 
 

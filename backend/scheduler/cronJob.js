@@ -25,10 +25,10 @@ const formatMySQLDateTime = (date) => {
 };
 
 const initScheduler = () => {
-    console.log('Meeting scheduler initialized');
+    // console.log('Meeting scheduler initialized');
 
     cron.schedule('* * * * *', async () => {
-        console.log('Running daily meeting scheduler');
+        // console.log('Running daily meeting scheduler');
 
         try {
             const today = new Date().toISOString().split('T')[0];
@@ -63,7 +63,7 @@ const initScheduler = () => {
                     newEndTime = new Date(nextSchedule);
                     newEndTime.setHours(17, 0, 0); // Default: 05:00:00 PM
                 }
-                console.log(newStartTime, nextSchedule)
+                // console.log(newStartTime, nextSchedule)
                 await db.query(
                     'UPDATE meeting SET next_schedule = ?, start_time = ?, end_time = ?, meeting_status = "not_started" WHERE id = ?',
                     [
@@ -79,7 +79,7 @@ const initScheduler = () => {
                     [meeting.id, formatMySQLDateTime(nextSchedule)]
                 );
 
-                console.log(`Meeting ID ${meeting.id} rescheduled for ${formatMySQLDateTime(nextSchedule)} with start_time: ${formatMySQLDateTime(newStartTime)} and end_time: ${formatMySQLDateTime(newEndTime)}`);
+                // console.log(`Meeting ID ${meeting.id} rescheduled for ${formatMySQLDateTime(nextSchedule)} with start_time: ${formatMySQLDateTime(newStartTime)} and end_time: ${formatMySQLDateTime(newEndTime)}`);
             }
         } catch (error) {
             console.error('Cron job error:', error);

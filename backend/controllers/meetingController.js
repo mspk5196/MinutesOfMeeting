@@ -75,7 +75,7 @@ const insertForwardedPoints = async (meetingId, templateId, userId) => {
 
 
 
-        console.log(userId, meetingId, templateId, futurePoints);
+        // console.log(userId, meetingId, templateId, futurePoints);
 
         for (const point of futurePoints) {
             if (point.forwarded_decision === 'AGREE') {
@@ -109,7 +109,7 @@ const insertForwardedPoints = async (meetingId, templateId, userId) => {
                 [templateId, userId, pointIds]
             );
 
-            console.log(`Forwarded ${futurePoints.length} points to meeting ${meetingId}.`);
+            // console.log(`Forwarded ${futurePoints.length} points to meeting ${meetingId}.`);
         }
 
     } catch (error) {
@@ -433,7 +433,7 @@ const createMeeting = async (req, res) => {
                 // Send emails asynchronously (don't wait for completion)
                 sendMeetingInvitation(meetingDetails, participants)
                     .then(result => {
-                        console.log('Email notification result:', result);
+                        // console.log('Email notification result:', result);
                     })
                     .catch(err => {
                         console.error('Failed to send email notifications:', err);
@@ -2453,15 +2453,15 @@ const getForwardedPointHistory = async (req, res) => {
 
         const point = currentPoint[0];
 
-        console.log('Point History Access Check:', {
-            pointId,
-            pointName: point.point_name,
-            meetingId: point.meeting_id,
-            meetingStatus: point.meeting_status,
-            createdBy: point.created_by,
-            accessUserId,
-            responsibleUser: point.point_responsibility
-        });
+        // console.log('Point History Access Check:', {
+        //     pointId,
+        //     pointName: point.point_name,
+        //     meetingId: point.meeting_id,
+        //     meetingStatus: point.meeting_status,
+        //     createdBy: point.created_by,
+        //     accessUserId,
+        //     responsibleUser: point.point_responsibility
+        // });
 
         // Robust access checks - allow if user is ANY of:
         // 1) Meeting creator (admin/scheduler)
@@ -2499,32 +2499,32 @@ const getForwardedPointHistory = async (req, res) => {
         );
         const isForwardOwnerByName = forwardOwnerByName.length > 0;
 
-        console.log('Access Control Results:', {
-            isCreator,
-            isMember,
-            isResponsibleUser,
-            isForwardOwnerByPoint,
-            isForwardOwnerByName,
-            accessGranted: isCreator || isMember || isResponsibleUser || isForwardOwnerByPoint || isForwardOwnerByName
-        });
+        // console.log('Access Control Results:', {
+        //     isCreator,
+        //     isMember,
+        //     isResponsibleUser,
+        //     isForwardOwnerByPoint,
+        //     isForwardOwnerByName,
+        //     accessGranted: isCreator || isMember || isResponsibleUser || isForwardOwnerByPoint || isForwardOwnerByName
+        // });
 
         // Deny access if user is NONE of the above
         if (!isCreator && !isMember && !isResponsibleUser && !isForwardOwnerByPoint && !isForwardOwnerByName) {
-            console.log('Access DENIED for user:', accessUserId);
+            // console.log('Access DENIED for user:', accessUserId);
             return res.status(403).json({
                 success: false,
                 message: 'You do not have access to view this point'
             });
         }
 
-        console.log('Access GRANTED for user:', accessUserId);
+        // console.log('Access GRANTED for user:', accessUserId);
 
         // Build the history by tracing back through meeting_point_future
         const history = [];
         let currentPointId = pointId;
         const visitedPoints = new Set();
         
-        console.log('Starting history trace for point:', point.point_name);
+        // console.log('Starting history trace for point:', point.point_name);
 
         // Trace back the history
         while (currentPointId && !visitedPoints.has(currentPointId)) {
@@ -2550,7 +2550,7 @@ const getForwardedPointHistory = async (req, res) => {
 
             const detail = pointDetails[0];
             
-            console.log(`Found history entry: Meeting "${detail.meeting_name}" (${new Date(detail.start_time).toLocaleDateString()}) - Forward: ${detail.forward_type || 'NIL'}`);
+            // console.log(`Found history entry: Meeting "${detail.meeting_name}" (${new Date(detail.start_time).toLocaleDateString()}) - Forward: ${detail.forward_type || 'NIL'}`);
 
             history.push({
                 point_id: detail.id,
@@ -2592,7 +2592,7 @@ const getForwardedPointHistory = async (req, res) => {
             }
         }
         
-        console.log(`History trace complete. Found ${history.length} entries. Reversing to show oldest → newest.`);
+        // console.log(`History trace complete. Found ${history.length} entries. Reversing to show oldest → newest.`);
 
         res.status(200).json({
             success: true,
@@ -2755,7 +2755,7 @@ const getAlternateRequests = async (req, res) => {
     const userId = req.user.userId;
     const { meetingId, status } = req.query;
 
-    console.log('getAlternateRequests called:', { userId, meetingId, status });
+    // console.log('getAlternateRequests called:', { userId, meetingId, status });
 
     try {
         let query = `
@@ -2787,12 +2787,12 @@ const getAlternateRequests = async (req, res) => {
 
         query += ` ORDER BY ar.request_date DESC`;
 
-        console.log('Executing query:', query);
-        console.log('With params:', params);
+        // console.log('Executing query:', query);
+        // console.log('With params:', params);
 
         const [requests] = await db.query(query, params);
 
-        console.log('Found requests:', requests.length);
+        // console.log('Found requests:', requests.length);
 
         res.status(200).json({
             success: true,
@@ -2986,7 +2986,7 @@ const adminApproveAlternate = async (req, res) => {
                         // Send email asynchronously
                         sendMeetingInvitation(meeting, [participant])
                             .then(result => {
-                                console.log('Alternate approval email sent:', result);
+                                // console.log('Alternate approval email sent:', result);
                             })
                             .catch(err => {
                                 console.error('Failed to send alternate approval email:', err);

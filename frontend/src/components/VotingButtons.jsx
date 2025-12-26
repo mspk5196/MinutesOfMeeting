@@ -116,13 +116,13 @@ const VotingButtons = ({
                     'Authorization': `Bearer ${token}`
                 }
             });
-            console.log('Toggle Voting Response:', response.data);
+            // console.log('Toggle Voting Response:', response.data);
             if (response.data.success && onVoteUpdate) {
                 const newVotingState = {
                     ...voting,
                     voting_active: !voting.voting_active
                 };
-                console.log('Updating voting state:', { oldState: voting, newState: newVotingState });
+                // console.log('Updating voting state:', { oldState: voting, newState: newVotingState });
                 onVoteUpdate(pointId, newVotingState);
             }
         } catch (error) {

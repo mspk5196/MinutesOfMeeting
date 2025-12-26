@@ -183,7 +183,7 @@ const sendMeetingInvitation = async (meetingDetails, participants) => {
         const failures = results.filter(result => result.status === 'rejected');
         const successes = results.filter(result => result.status === 'fulfilled');
 
-        console.log(`Emails sent: ${successes.length} successful, ${failures.length} failed`);
+        // console.log(`Emails sent: ${successes.length} successful, ${failures.length} failed`);
 
         if (failures.length > 0) {
             console.error('Failed to send emails to some participants:', failures);

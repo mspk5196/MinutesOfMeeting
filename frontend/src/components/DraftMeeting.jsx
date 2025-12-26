@@ -86,7 +86,7 @@ export default function Cmeeting({ onBack }) {
       const formatDate = (date) => {
         return date.toISOString().split('.')[0];  // Remove milliseconds
       };
-      console.log(selectedDateTime)
+      // console.log(selectedDateTime)
 
       const [datePart, timePart] = selectedDateTime.split(" && ");
       const [startTimeStr, endTimeStr] = timePart.split(" - ");
@@ -97,8 +97,8 @@ export default function Cmeeting({ onBack }) {
       const startFormatted = start.format("YYYY-MM-DD HH:mm:ss");
       const endFormatted = end.format("YYYY-MM-DD HH:mm:ss");
 
-      console.log("start_time:", startFormatted);
-      console.log("end_time:", endFormatted);
+      // console.log("start_time:", startFormatted);
+      // console.log("end_time:", endFormatted);
 
       const meetingData = {
         name: selectedMeeting || "Untitled Meeting",
@@ -124,7 +124,7 @@ export default function Cmeeting({ onBack }) {
         }))
       };
 
-      console.log('Sending meeting data:', JSON.stringify(meetingData, null, 2));
+      // console.log('Sending meeting data:', JSON.stringify(meetingData, null, 2));
 
       // Call the API to create the meeting
       const response = await api.post(
@@ -138,19 +138,19 @@ export default function Cmeeting({ onBack }) {
         }
       );
 
-      console.log('Meeting created successfully:', response.data);
+      // console.log('Meeting created successfully:', response.data);
 
       // Now assign responsibilities for each discussion point that has responsibility assigned
       const meetingId = response.data.meetingId;
 
       // Prepare an array of responsibility assignment promises
 
-      console.log(discussionPoints)
+      // console.log(discussionPoints)
 
       const responsibilityPromises = discussionPoints
         .filter(point => point.responsibility && point.responsibility.length > 0)
         .map(async (point, index) => {
-          console.log(point, index)
+          // console.log(point, index)
           try {
             // First we need to get the pointId from the backend
             // We query the points for this meeting to find the one matching our point text
@@ -188,7 +188,7 @@ export default function Cmeeting({ onBack }) {
               }
             );
 
-            console.log(`Responsibility assigned for point ${index + 1}:`, responsibilityResponse.data);
+            // console.log(`Responsibility assigned for point ${index + 1}:`, responsibilityResponse.data);
             return responsibilityResponse.data;
           } catch (error) {
             console.error(`Error assigning responsibility for point ${index + 1}:`, error);
@@ -267,7 +267,7 @@ export default function Cmeeting({ onBack }) {
     setSelectedDate((prev) => ({ ...prev, [index]: date.format("YYYY-MM-DD") }));
     var discussionPointsNew = discussionPoints;
     discussionPointsNew[index].deadline = date.format("YYYY-MM-DD");
-    console.log(discussionPointsNew)
+    // console.log(discussionPointsNew)
     setDiscussionPoints(discussionPointsNew)
     setOpenDateIndex(null);
   };
@@ -704,7 +704,7 @@ export default function Cmeeting({ onBack }) {
     }
   };
 
-  console.log(discussionPoints  );
+  // console.log(discussionPoints  );
 
   return (
     <Box>

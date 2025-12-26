@@ -32,7 +32,7 @@ function GoogleAuthCallback({ onLoginSuccess }) {
           try {
             const userData = JSON.parse(decodeURIComponent(userParam));
             localStorage.setItem('userId', JSON.stringify(userData));
-            console.log('Stored user data:', userData);
+            // console.log('Stored user data:', userData);
           } catch (e) {
             console.error('Could not parse user data:', e);
             // If user data parsing fails, we should still try to decode from token

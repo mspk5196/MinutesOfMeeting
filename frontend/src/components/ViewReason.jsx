@@ -3,7 +3,7 @@ import { Card, CardContent, Typography, Box } from '@mui/material';
 
 const Reason = ({ data, onClose }) => {
   if (!data) return null;
-  console.log(onClose)
+  // console.log(onClose)
   return (
     <Box
       display="flex"

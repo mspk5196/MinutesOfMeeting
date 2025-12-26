@@ -37,7 +37,7 @@ export default function CreateMeeting({ onUseTemplate, onClose }) {
           const storedUser = localStorage.getItem('userId');
           if (storedUser) {
             const parsed = JSON.parse(storedUser);
-            console.log(parsed)
+            // console.log(parsed)
             setIsAdmin((parsed.role || '').toLowerCase() === 'admin');
           }
         } catch (e) {
@@ -57,7 +57,7 @@ export default function CreateMeeting({ onUseTemplate, onClose }) {
             const storedMap = localStorage.getItem('templateCategoryMap');
             if (storedMap) {
               categoryMap = JSON.parse(storedMap);
-              console.log('Retrieved category map from localStorage:', categoryMap);
+              // console.log('Retrieved category map from localStorage:', categoryMap);
             }
           } catch (error) {
             console.error('Error parsing category map:', error);
@@ -71,7 +71,7 @@ export default function CreateMeeting({ onUseTemplate, onClose }) {
             // If we have a stored category for this template name in localStorage,
             // prioritize it over the API value
             if (template.name && categoryMap[template.name]) {
-              console.log(`Using saved category for "${template.name}": ${categoryMap[template.name]} (API value: ${categoryName})`);
+              // console.log(`Using saved category for "${template.name}": ${categoryMap[template.name]} (API value: ${categoryName})`);
               categoryName = categoryMap[template.name];
             }
             

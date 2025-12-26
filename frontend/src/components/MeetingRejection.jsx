@@ -147,7 +147,7 @@ function MeetingRejection({ onClose, meetingId, token, meetingMembers }) {
         const data = await res.json();
 
         if (res.ok) {
-          console.log('Rejected successfully:', data);
+          // console.log('Rejected successfully:', data);
           alert('Meeting rejected successfully');
           onClose();
         } else {

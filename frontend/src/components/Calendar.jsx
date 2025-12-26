@@ -81,7 +81,7 @@ const Calendar = ({ initialDate = new Date() }) => {
   };
 
   const handleEventClick = (event) => {
-    console.log('Event clicked:', event);
+    // console.log('Event clicked:', event);
     // You can add more functionality here like showing event details
   };
 
@@ -98,7 +98,7 @@ const Calendar = ({ initialDate = new Date() }) => {
       if (response.data.success) {
         let formattedMeetings = [];
 
-        console.log(response.data.meetings)
+        // console.log(response.data.meetings)
 
         // First sort meetings by start time to process them sequentially
         const sortedMeetings = [...response.data.meetings].sort((a, b) =>
@@ -115,7 +115,7 @@ const Calendar = ({ initialDate = new Date() }) => {
 
           // Move to next color for the next meeting
           colorIndex++;
-          console.log(sortedMeetings)
+          // console.log(sortedMeetings)
 
           const formattedMeeting = {
             id: meeting.id,
@@ -145,7 +145,7 @@ const Calendar = ({ initialDate = new Date() }) => {
         });
 
         setEvents(formattedMeetings);
-        console.log("Meetings with colors:", formattedMeetings);
+        // console.log("Meetings with colors:", formattedMeetings);
       }
     } catch (error) {
       console.error("Failed to fetch meetings:", error);

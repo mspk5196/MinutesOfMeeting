@@ -57,7 +57,7 @@ const PreviewMeeting = ({ meetingData, onClose }) => {
         }
       );
 
-      console.log("Point History:", response.data);
+      // console.log("Point History:", response.data);
       setSelectedPointHistory(response.data.history || []);
     } catch (error) {
       console.error("Error fetching point history:", error);

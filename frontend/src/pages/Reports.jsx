@@ -188,7 +188,7 @@ export default function Reports() {
             dateCreated: report.dateCreated
         }));
 
-        console.log('Exporting reports:', exportData);
+        // console.log('Exporting reports:', exportData);
         alert(`Exporting ${selectedReports.length} reports`);
     };
 

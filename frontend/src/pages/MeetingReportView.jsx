@@ -108,7 +108,7 @@ export default function MeetingReportView() {
 
                 if (meetingResponse.data) {
                     const meetingData = meetingResponse.data;
-                    console.log(meetingData.start_time)
+                    // console.log(meetingData.start_time)
 
                     // Format the data to match the report structure
                     const formattedReport = {
@@ -124,7 +124,7 @@ export default function MeetingReportView() {
                         points: (response.data.data.points || [])
                     };
 
-                    console.log(formattedReport)
+                    // console.log(formattedReport)
                     setReport(formattedReport);
                 }
             } catch (err) {

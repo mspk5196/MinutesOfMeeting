@@ -120,7 +120,7 @@ export default function StartMeet({ handleBack }) {
   );
 
   useEffect(() => {
-    console.log(points);
+    // console.log(points);
   }, [points]);
 
   // For date pickers, you’ll need state to track which index is open
@@ -471,7 +471,7 @@ export default function StartMeet({ handleBack }) {
           },
         }
       );
-      console.log(response.data)
+      // console.log(response.data)
 
       if (response.data.meeting_status == "in_progress") {
         setOnStart(true);
@@ -629,7 +629,7 @@ export default function StartMeet({ handleBack }) {
   };
 
   const EndMeeting = executeSubmitEnd(async () => {
-    console.log('EndMeeting called, attempting to end meeting...');
+    // console.log('EndMeeting called, attempting to end meeting...');
     
     // Simple check - just notify user that meeting is being ended
     // The backend only checks if meeting status is "in_progress"
@@ -653,7 +653,7 @@ export default function StartMeet({ handleBack }) {
         return;
       }
 
-      console.log('Sending end meeting request for meetingId:', id);
+      // console.log('Sending end meeting request for meetingId:', id);
       
       const response = await api.post(
         `/api/meetings/end-meeting/`,
@@ -673,7 +673,7 @@ export default function StartMeet({ handleBack }) {
 
       // Navigate only on success
       if (response.status === 200 || response.status === 201) {
-        console.log('Meeting ended successfully, navigating to reports...');
+        // console.log('Meeting ended successfully, navigating to reports...');
         navigate(`/reports/${meetingData.id}`);
       } else {
         alert(response.data?.message || "Failed to end meeting. Please try again.");
@@ -908,7 +908,7 @@ export default function StartMeet({ handleBack }) {
                 );
               }
             } catch (error) {
-              console.log(`No admin vote found for point ${point.pointId}`);
+              // console.log(`No admin vote found for point ${point.pointId}`);
             }
           })
         );
@@ -954,7 +954,7 @@ export default function StartMeet({ handleBack }) {
     if (!window.confirm('Are you sure you want to delete this point?')) {
       return;
     }
-    console.log(index, pointId)
+    // console.log(index, pointId)
     try {
       // Try to delete from backend if point has an ID (has been saved)
       if (pointId) {
@@ -983,7 +983,7 @@ export default function StartMeet({ handleBack }) {
         setPoints(updatedPoints);
       }
 
-      console.log('Point deleted successfully');
+      // console.log('Point deleted successfully');
     } catch (error) {
       console.error('Error deleting point:', error);
       alert('Failed to delete point. Please try again.');
