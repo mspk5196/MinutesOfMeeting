@@ -1,6 +1,9 @@
 // middleware/auth.js
 const jwt = require('jsonwebtoken');
 
+// Use same fallback secret as other modules if env not set
+const JWT_SECRET = process.env.JWT_SECRET || 'your_secret_key';
+
 const authenticateToken = (req, res, next) => {
     try {
         const authHeader = req.headers['authorization'];
@@ -13,7 +16,7 @@ const authenticateToken = (req, res, next) => {
             });
         }
 
-        jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+        jwt.verify(token, JWT_SECRET, (err, user) => {
             if (err) {
                 return res.status(403).json({
                     success: false,

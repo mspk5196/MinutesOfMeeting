@@ -6,6 +6,9 @@ const authController = require('../controllers/authController');
 const { authenticateToken } = require('../middleware/authMiddleware');
 const db = require('../config/db');
 
+// Reuse the same JWT secret everywhere
+const JWT_SECRET = process.env.JWT_SECRET || 'your_secret_key';
+
 const router = express.Router();
 
 // Initialize Google OAuth client
@@ -81,7 +84,7 @@ router.get('/google/callback', async (req, res) => {
         // Generate JWT token
         const jwtToken = jwt.sign(
             { userId: userId, email, name },
-            process.env.JWT_SECRET || 'your-jwt-secret',
+            JWT_SECRET,
             { expiresIn: '24h' }
         );
 
@@ -145,8 +148,8 @@ router.post('/google/verify', async (req, res) => {
 
         // Generate JWT
         const token = jwt.sign(
-            { id: userId, email, name },
-            process.env.JWT_SECRET || 'your-jwt-secret',
+            { userId: userId, email, name },
+            JWT_SECRET,
             { expiresIn: '24h' }
         );
 

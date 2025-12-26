@@ -3,6 +3,10 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const db = require('../config/db');
 
+// Use a consistent JWT secret and expiry across the app
+const JWT_SECRET = process.env.JWT_SECRET || 'your_secret_key';
+const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '8h';
+
 const authController = {
     login: async(req, res) => {
         try {
@@ -46,8 +50,8 @@ const authController = {
             // Generate token
             const token = jwt.sign(
                 { userId: user.id, email: user.email },
-                process.env.JWT_SECRET || 'your-jwt-secret',
-                { expiresIn: process.env.JWT_EXPIRES_IN || '8h' }
+                JWT_SECRET,
+                { expiresIn: JWT_EXPIRES_IN }
             );
 
             res.json({
@@ -107,9 +111,9 @@ const authController = {
 
             // Generate token
             const token = jwt.sign(
-                { id: result.insertId, email },
-                process.env.JWT_SECRET || 'your-jwt-secret',
-                { expiresIn: process.env.JWT_EXPIRES_IN || '8h' }
+                { userId: result.insertId, email },
+                JWT_SECRET,
+                { expiresIn: JWT_EXPIRES_IN }
             );
 
             res.status(201).json({
