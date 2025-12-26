@@ -33,6 +33,11 @@ app.use('/api/meetings', meetingRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/voting', votingRoutes);
 
+app.use((req, res, next) => {
+  console.log(`[${req.method}] ${req.url}`, req.body);
+  next();
+});
+
 app.use((err, req, res, next) => {
     console.error(err.stack);
     res.status(500).json({
