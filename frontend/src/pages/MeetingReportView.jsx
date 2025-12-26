@@ -21,9 +21,11 @@ import { formatInTimeZone } from 'date-fns-tz';
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 import { format } from 'date-fns';
+import {api} from '../utils/apiClient';
 
 // Import the header image directly from assets
 import image from "../assets/bannariammanheader.png";
+import { apiUrl } from '../utils/apiClient';
 
 // Styles to match template1.jsx exactly
 const cellStyle = {
