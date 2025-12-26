@@ -1,5 +1,5 @@
 # Frontend Dockerfile - Build stage
-FROM node:18-alpine AS builder
+FROM node:20-alpine AS builder
 
 WORKDIR /app
 
@@ -9,6 +9,13 @@ COPY package.json package-lock.json* ./
 # Install dependencies
 RUN npm install
 
+# 👇 Build-time envs
+ARG REACT_APP_GOOGLE_CLIENT_ID
+ARG VITE_API_BASE_URL
+
+ENV REACT_APP_GOOGLE_CLIENT_ID=$REACT_APP_GOOGLE_CLIENT_ID
+ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
+
 # Copy source code
 COPY . .
 
@@ -16,7 +23,7 @@ COPY . .
 RUN npm run build
 
 # Production stage
-FROM node:18-alpine
+FROM node:20-alpine
 
 WORKDIR /app
 

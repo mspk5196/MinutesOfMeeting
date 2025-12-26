@@ -6,11 +6,14 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        REACT_APP_GOOGLE_CLIENT_ID: ${REACT_APP_GOOGLE_CLIENT_ID}
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL}
     container_name: bitmeetings-frontend
     ports:
       - "8080:80"
-    environment:
-      - VITE_API_URL=/api/
+    env_file:
+      - /envs/bit-meetings-frontend.env
     depends_on:
       - backend
     restart: unless-stopped
@@ -25,16 +28,8 @@ services:
     container_name: bitmeetings-backend
     ports:
       - "5000:5000"
-    environment:
-      - NODE_ENV=production
-      - PORT=5000
-      # Add your environment variables here
-      - DB_HOST=bitmeetings-mysql
-      - DB_USER=bitmeetings
-      - DB_PASSWORD=bitmeetings123@
-      - DB_NAME=bitmeetings_db
-      - JWT_SECRET=991d77fe2b44271e59b564a39bf3635c97d1ab62106f869a3c336dfb7e876b5d09cbffcc9df1997976407ff084e64dc382b4aad31aee002c9eeb83e3fbcb7792
-      - GOOGLE_CLIENT_ID=563618874909-ilbp07v0eqhl6j234d4g35uj16g4iqr6.apps.googleusercontent.com
+    env_file:
+      - /envs/bit-meetings-backend.env
     volumes:
       - ./backend/uploads:/app/uploads
     depends_on:
@@ -47,13 +42,10 @@ services:
   mysql:
     image: mysql:8.0
     container_name: bitmeetings-mysql
-    environment:
-      - MYSQL_ROOT_PASSWORD=root123
-      - MYSQL_DATABASE=bitmeetings_db
-      - MYSQL_USER=bitmeetings_user
-      - MYSQL_PASSWORD=bitmeetings123@
     ports:
       - "3306:3306"
+    env_file:
+      - /envs/bit-meetings-mysql.env
     volumes:
       - mysql_data:/var/lib/mysql
       - ./backend/database:/docker-entrypoint-initdb.d
