@@ -22,6 +22,11 @@ app.use(cors({
 
 const authRoutes = require('./routes/authRoutes');
 
+app.use((req, res, next) => {
+  console.log(`[${req.method}] ${req.url}`, req.body);
+  next();
+});
+
 // Health check endpoint
 app.get('/health', (req, res) => {
     res.status(200).json({ status: 'OK', timestamp: new Date().toISOString() });
@@ -33,10 +38,6 @@ app.use('/api/meetings', meetingRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/voting', votingRoutes);
 
-app.use((req, res, next) => {
-  console.log(`[${req.method}] ${req.url}`, req.body);
-  next();
-});
 
 app.use((err, req, res, next) => {
     console.error(err.stack);
