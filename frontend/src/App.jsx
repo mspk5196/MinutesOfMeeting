@@ -81,7 +81,7 @@ function App() {
 
   return (
     <PrimeReactProvider value={value}>
-      <Router>
+      <Router basename="/meetings">
         <Toast />
         <div className="App">
           {isCheckingToken ? (
