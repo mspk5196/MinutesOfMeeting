@@ -4,7 +4,6 @@ const dotenv = require('dotenv');
 // Load environment variables
 dotenv.config();
 
-// Create a connection pool
 const pool = mysql.createPool({
     host: process.env.DB_HOST,
     user: process.env.DB_USER,
@@ -13,17 +12,7 @@ const pool = mysql.createPool({
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0,
-    timezone: 'Z',  // Forces UTC
+    timezone: 'Z',
 });
-
-(async () => {
-  try {
-    const connection = await pool.getConnection();
-    console.log("✅ Connected to MySQL database");
-    connection.release();
-  } catch (err) {
-    console.error("❌ Database connection error:", err);
-  }
-})();
 
 module.exports = pool;
