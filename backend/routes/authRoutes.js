@@ -12,7 +12,7 @@ const router = express.Router();
 const googleClient = new OAuth2Client(
     process.env.GOOGLE_CLIENT_ID,
     process.env.GOOGLE_CLIENT_SECRET,
-    `${process.env.BACKEND_URL || 'http://192.168.10.5:5000'}/auth/google/callback`
+    `${process.env.API_URL}/auth/google/callback`
 );
 
 // Local auth routes
