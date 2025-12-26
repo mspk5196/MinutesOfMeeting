@@ -1,8 +1,6 @@
 import axios from 'axios';
 
-const API_URL = process.env.NODE_ENV === 'production' 
-  ? '/api'  // In production, use relative path
-  : 'http://localhost:3000/api'; // In development, use full URL
+const API_URL = import.meta.env.VITE_API_BASE_URL;
 
 // User API calls
 export const loginUser = async (userData) => {
