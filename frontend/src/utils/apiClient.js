@@ -4,7 +4,7 @@ import axios from 'axios';
 export const API_BASE_URL =
   (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_BASE_URL) ||
   (typeof window !== 'undefined' && window.__API_BASE_URL__) ||
-  'https://pcdp.bitsathy.ac.in/api/';
+  'https://pcdp.bitsathy.ac.in/meetings/api';
 
 export const apiUrl = (path = '') => {
   if (!path) return API_BASE_URL;
