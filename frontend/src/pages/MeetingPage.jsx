@@ -80,12 +80,14 @@ export default function StartMeet({ handleBack }) {
 
   const location = useLocation();
   const { meetingData } = location.state || {};
-  console.log(meetingData);
   const navigate = useNavigate();
 
   // State management
   const [status, setStatus] = useState(null);
-  const [onStart, setOnStart] = useState(false);
+  const [onStart, setOnStart] = useState(
+    meetingData?.meeting_status === "in_progress" || 
+    meetingData?.status === "in_progress"
+  );
   const [selectedTab, setSelectedTab] = useState("attendance");
   const [isForward, setIsForward] = useState(false);
   const [selectedAction, setSelectedAction] = useState(null);
@@ -186,7 +188,6 @@ export default function StartMeet({ handleBack }) {
           },
         }));
         setMeetingAgenda(pointsWithVoting);
-        console.log(response.data.data);
       } catch (err) {
         console.error(err);
         // Initialize with all members as absent if API fails
@@ -258,7 +259,6 @@ export default function StartMeet({ handleBack }) {
     isSubpoint = false,
     subIndex = null
   ) {
-    console.log("ksjflksdjkldfjl;sdfjl;asfkj;lkfkjdl;kfjl;kfjkl;jdklj");
     setPoints((prevPoints) => {
       const newPoints = [...prevPoints];
       if (isSubpoint && subIndex !== null) {
@@ -385,7 +385,6 @@ export default function StartMeet({ handleBack }) {
       for (const entry of res.data.insertedPoints) {
         newPointMap[entry.index] = entry.point_id;
       }
-      console.log(newPointMap);
       // Apply new point_ids based on index
       const updatedState = updatedPoints.map((point, i) => {
         const updated = { ...point };
@@ -404,9 +403,7 @@ export default function StartMeet({ handleBack }) {
 
         return updated;
       });
-      console.log(updatedState);
       setPoints(updatedState);
-      console.log("All points updated with correct point_ids.");
     } catch (err) {
       console.error(
         "Error submitting points:",
@@ -431,8 +428,6 @@ export default function StartMeet({ handleBack }) {
 
   const markAttendance = executeSubmitAttendance(async (userId, status) => {
     const token = localStorage.getItem("token");
-    console.log(userId);
-    console.log(attendanceRecords);
     try {
       await api.post(
         "/api/meetings/mark-attendence",
@@ -476,8 +471,9 @@ export default function StartMeet({ handleBack }) {
           },
         }
       );
+      console.log(response.data)
 
-      if (response.data.meeting.status == "in_progress") {
+      if (response.data.meeting_status == "in_progress") {
         setOnStart(true);
       }
     } catch (error) {
@@ -531,7 +527,6 @@ export default function StartMeet({ handleBack }) {
         }
       );
       
-      console.log("Point History:", response.data);
       setSelectedPointHistory(response.data.history || []);
     } catch (err) {
       console.error("Error fetching point history:", err);
@@ -695,10 +690,7 @@ export default function StartMeet({ handleBack }) {
         );
         if (subIndex === -1 || subIndex === undefined) return;
 
-        console.log(
-          `Calling for subpoint ${point.id}:`,
-          point.forward_info.decision
-        );
+
         handleChangeStatus(
           mainIndex,
           point.forward_info.decision,
@@ -710,10 +702,6 @@ export default function StartMeet({ handleBack }) {
         const mainIndex = points.findIndex((p) => p.point_id === point.id);
         if (mainIndex === -1) return;
 
-        console.log(
-          `Calling for main point ${point.id}:`,
-          point.forward_info.decision
-        );
         handleChangeStatus(mainIndex, point.forward_info.decision);
       }
     });
@@ -752,7 +740,11 @@ export default function StartMeet({ handleBack }) {
       );
 
       if (response.data.success) {
-        console.log("Admin voting data fetched:", response.data.data);
+
+        // Check meeting status and update onStart state
+        if (response.data.meeting && response.data.meeting_status === "in_progress") {
+          setOnStart(true);
+        }
 
         // Update both points and meetingAgenda with voting data
         const votingMap = {};
@@ -874,7 +866,6 @@ export default function StartMeet({ handleBack }) {
 
         const decoded = JSON.parse(jsonPayload);
         // Support tokens that may use either `userId` or `id` in their payload
-        console.log('MeetingPage: decoded token payload', decoded);
         return decoded.userId || decoded.id;
       }
     } catch (error) {
@@ -885,15 +876,49 @@ export default function StartMeet({ handleBack }) {
 
   const currentUserId = getUserIdFromToken();
   const isAdmin = meetingData?.host_id === currentUserId;
-  console.log(meetingData, currentUserId);
 
-  console.log("MeetingPage Admin check:", {
-    currentUserId,
-    meetingCreatedBy: meetingData?.host_id,
-    isAdmin,
-  });
 
-  console.log(points);
+  // Delete point function
+  const handleDeletePoint = async (index, pointId, isSubpoint = false, subIndex = null) => {
+    if (!window.confirm('Are you sure you want to delete this point?')) {
+      return;
+    }
+    console.log(index, pointId)
+    try {
+      // Try to delete from backend if point has an ID (has been saved)
+      if (pointId) {
+        const token = localStorage.getItem('token');
+        try {
+          await api.delete(`/api/meetings/point/${pointId}`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            }
+          });
+        } catch (backendError) {
+          console.warn('Backend delete failed, removing from local state only:', backendError);
+          // If backend delete fails, continue with local state update
+        }
+      }
+
+      // Update local state
+      if (isSubpoint && subIndex !== null) {
+        // Delete subpoint
+        const updatedPoints = [...points];
+        updatedPoints[index].subpoints = updatedPoints[index].subpoints.filter((_, idx) => idx !== subIndex);
+        setPoints(updatedPoints);
+      } else {
+        // Delete main point
+        const updatedPoints = points.filter((_, idx) => idx !== index);
+        setPoints(updatedPoints);
+      }
+
+      console.log('Point deleted successfully');
+    } catch (error) {
+      console.error('Error deleting point:', error);
+      alert('Failed to delete point. Please try again.');
+    }
+  };
+
   return (
     <Box>
       {/* Diagnostic Component - Remove after debugging */}
@@ -1418,13 +1443,18 @@ export default function StartMeet({ handleBack }) {
                   >
                     Voting
                   </TableCell>
+                  <TableCell
+                    width="5%"
+                    sx={{ ...headerCellStyle, textAlign: "center" }}
+                  >
+                    Actions
+                  </TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 <>
                   {points.map((point, index) => {
                     const isRowDisabled = isRejected(point.responsibleId);
-                    console.log(point);
                     // Common style for disabled elements
                     const disabledStyle = isRowDisabled
                       ? {
@@ -1594,7 +1624,6 @@ export default function StartMeet({ handleBack }) {
                                     onClick={() => {
                                       var updatedPoint = point;
                                       updatedPoint.DecisionIndex = index;
-                                      console.log(meetingAgenda);
                                       setSelectedPoint(updatedPoint);
                                       handleForwardClick("DISAGREE");
                                       //handleChangeStatus(index, "DISAGREE");
@@ -1737,6 +1766,21 @@ export default function StartMeet({ handleBack }) {
                               meetingStatus={meetingData?.meeting_status}
                               compact={true}
                             />
+                          </TableCell>
+                          <TableCell sx={{ ...cellStyle, textAlign: "center" }}>
+                            <IconButton
+                              size="small"
+                              onClick={() => {handleDeletePoint(index, point.point_id, false)}}
+                              sx={{
+                                color: "error.main",
+                                "&:hover": {
+                                  backgroundColor: "error.light",
+                                  color: "white",
+                                },
+                              }}
+                            >
+                              <DeleteOutlineIcon fontSize="small" />
+                            </IconButton>
                           </TableCell>
                         </TableRow>
 
@@ -1893,7 +1937,6 @@ export default function StartMeet({ handleBack }) {
                                           var updatedPoint = subpoint;
                                           updatedPoint.DecisionIndex = index;
                                           updatedPoint.SubPointIndex = subIndex;
-                                          console.log(meetingAgenda);
                                           setSelectedPoint(updatedPoint);
                                           handleForwardClick("DISAGREE");
                                           //handleChangeStatus(index, "DISAGREE");
@@ -2053,11 +2096,26 @@ export default function StartMeet({ handleBack }) {
                                   compact={true}
                                 />
                               </TableCell>
+                              <TableCell sx={{ ...cellStyle, textAlign: "center" }}>
+                                <IconButton
+                                  size="small"
+                                  onClick={() => handleDeletePoint(index, subpoint.point_id, true, subIndex)}
+                                  sx={{
+                                    color: "error.main",
+                                    "&:hover": {
+                                      backgroundColor: "error.light",
+                                      color: "white",
+                                    },
+                                  }}
+                                >
+                                  <DeleteOutlineIcon fontSize="small" />
+                                </IconButton>
+                              </TableCell>
                             </TableRow>
                           ))}
 
                         <TableRow>
-                          <TableCell colSpan={7} sx={{ border: 0, padding: 0 }}>
+                          <TableCell colSpan={8} sx={{ border: 0, padding: 0 }}>
                             <Box
                               sx={{
                                 display: "flex",
@@ -2080,7 +2138,7 @@ export default function StartMeet({ handleBack }) {
                     );
                   })}
                   <TableRow>
-                    <TableCell colSpan={7} sx={{ border: 0, padding: 0 }}>
+                    <TableCell colSpan={8} sx={{ border: 0, padding: 0 }}>
                       <Box
                         sx={{
                           display: "flex",
@@ -2152,7 +2210,6 @@ export default function StartMeet({ handleBack }) {
               <TableBody>
                 {points.map((point, index) => {
                   const isRowDisabled = isRejected(point.responsibleId);
-                  console.log(point);
                   // Common style for disabled elements
                   const disabledStyle = isRowDisabled
                     ? {

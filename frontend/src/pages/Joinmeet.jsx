@@ -111,7 +111,7 @@ const Reject = ({ onClose, handleSave }) => {
 export default function JoinMeet() {
     const navigate = useNavigate();
     const [openRejectCard, setOpenRejectCard] = useState(false);
-    const [isAccpet, setIsAccept] = useState(false);
+    const [isAccept, setIsAccept] = useState(false);
     const [onJoin, setOnJoin] = useState(false);
     const [selectedTab, setSelectedTab] = useState("attendance");
     const [pointData, setPointData] = useState([]);
@@ -213,12 +213,23 @@ export default function JoinMeet() {
 
     const sendTodo = executeSubmitTodo(async (pointId, todo, status) => {
         try {
+            // Validation: Check if todo is empty
+            if (!todo || todo.trim() === "") {
+                alert("Please enter a todo/remarks before submitting");
+                return;
+            }
+
             const token = localStorage.getItem('token');
+            if (!token) {
+                alert('Authentication token not found. Please log in again.');
+                return;
+            }
+
             const sentobj = {
                 pointId,
-                todo,
+                todo: todo.trim(),
                 status,
-                remarks: todo
+                remarks: todo.trim()
             };
 
             const response = await api.post(
@@ -231,23 +242,46 @@ export default function JoinMeet() {
                 }
             );
 
-            setPointData(prevData =>
-                prevData.map(point =>
-                    point.pointId === pointId
-                        ? { ...point, todo, point_status: status }
-                        : point
-                )
-            );
-
+            if (response.data && response.data.success !== false) {
+                setPointData(prevData =>
+                    prevData.map(point =>
+                        point.pointId === pointId
+                            ? { ...point, todo: todo.trim(), point_status: status }
+                            : point
+                    )
+                );
+                console.log('Todo updated successfully:', response.data);
+            } else {
+                alert('Failed to update todo. Please try again.');
+            }
         } catch (err) {
-            console.log(err);
+            console.error('Error submitting todo:', err);
+            if (err.response?.status === 401) {
+                alert('Session expired. Please log in again.');
+            } else if (err.response?.status === 403) {
+                alert('You do not have permission to update this todo.');
+            } else if (err.response?.status === 400) {
+                alert(`Validation error: ${err.response.data?.message || 'Invalid data provided'}`);
+            } else {
+                alert(`Error submitting todo: ${err.message}`);
+            }
         }
     });
 
     const acceptMeeting = executeSubmitAccept(async (status) => {
         try {
-            const meetingId = meetingData.id;
+            const meetingId = meetingData?.id;
+            if (!meetingId) {
+                alert('Meeting ID not found. Please refresh and try again.');
+                return;
+            }
+
             const token = localStorage.getItem('token');
+            if (!token) {
+                alert('Authentication token not found. Please log in again.');
+                return;
+            }
+
             const sentobj = { meetingId, status };
 
             const response = await api.post(
@@ -260,16 +294,40 @@ export default function JoinMeet() {
                 }
             );
 
-            setIsAccept(status === 'accept');
+            if (response.data && response.data.success !== false) {
+                setIsAccept(status === 'accept');
+                console.log('Meeting response saved:', response.data);
+            } else {
+                alert('Failed to save your response. Please try again.');
+            }
         } catch (err) {
-            console.log(err);
+            console.error('Error accepting meeting:', err);
+            if (err.response?.status === 401) {
+                alert('Session expired. Please log in again.');
+            } else if (err.response?.status === 403) {
+                alert('You do not have permission to respond to this meeting.');
+            } else if (err.response?.status === 400) {
+                alert(`Validation error: ${err.response.data?.message || 'Invalid data provided'}`);
+            } else {
+                alert(`Error responding to meeting: ${err.message}`);
+            }
         }
     });
 
     const joinMeeting = executeSubmitJoin(async (status) => {
         try {
-            const meetingId = meetingData.id;
+            const meetingId = meetingData?.id;
+            if (!meetingId) {
+                alert('Meeting ID not found. Please refresh and try again.');
+                return;
+            }
+
             const token = localStorage.getItem('token');
+            if (!token) {
+                alert('Authentication token not found. Please log in again.');
+                return;
+            }
+
             const sentobj = { meetingId, status };
 
             const response = await api.post(
@@ -282,9 +340,23 @@ export default function JoinMeet() {
                 }
             );
 
-            setIsAccept(status === 'accept');
+            if (response.data && response.data.success !== false) {
+                setIsAccept(status === 'accept');
+                console.log('Meeting joined:', response.data);
+            } else {
+                alert('Failed to join meeting. Please try again.');
+            }
         } catch (err) {
-            console.log(err);
+            console.error('Error joining meeting:', err);
+            if (err.response?.status === 401) {
+                alert('Session expired. Please log in again.');
+            } else if (err.response?.status === 403) {
+                alert('You do not have permission to join this meeting.');
+            } else if (err.response?.status === 400) {
+                alert(`Validation error: ${err.response.data?.message || 'Invalid data provided'}`);
+            } else {
+                alert(`Error joining meeting: ${err.message}`);
+            }
         }
     });
 
@@ -487,22 +559,55 @@ export default function JoinMeet() {
 
     const startMeeting = async () => {
         try {
+            if (!isAccept) {
+                alert('You must accept the meeting first before joining.');
+                return;
+            }
+
             const token = localStorage.getItem('token');
-            const response = await api.get(`/api/meetings/meeting/${meetingData.id}`, {
+            if (!token) {
+                alert('Authentication token not found. Please log in again.');
+                return;
+            }
+
+            const meetingId = meetingData?.id;
+            if (!meetingId) {
+                alert('Meeting ID not found. Please refresh and try again.');
+                return;
+            }
+
+            const response = await api.get(`/api/meetings/meeting/${meetingId}`, {
                 headers: {
                     Authorization: `Bearer ${token}`
                 }
             });
 
-            if (response.data.meeting_status == 'not_started') {
-                alert('meeting not started')
+            if (!response.data) {
+                alert('Failed to fetch meeting details. Please try again.');
+                return;
             }
-            else if (response.data.meeting_status == 'in_progress') {
-                joinMeeting('joined')
-                isAccpet && setOnJoin(true)
+
+            if (response.data.meeting_status === 'not_started') {
+                alert('Meeting has not started yet. Please wait for the organizer to start it.');
+            } else if (response.data.meeting_status === 'in_progress') {
+                await joinMeeting('joined');
+                setOnJoin(true);
+            } else if (response.data.meeting_status === 'completed') {
+                alert('This meeting has already been completed.');
+            } else {
+                alert(`Unknown meeting status: ${response.data.meeting_status}`);
             }
         } catch (error) {
-            console.error('Error fetching meeting:', error.response?.data || error.message);
+            console.error('Error fetching meeting:', error);
+            if (error.response?.status === 401) {
+                alert('Session expired. Please log in again.');
+            } else if (error.response?.status === 403) {
+                alert('You do not have permission to join this meeting.');
+            } else if (error.response?.status === 404) {
+                alert('Meeting not found.');
+            } else {
+                alert(`Error joining meeting: ${error.response?.data?.message || error.message}`);
+            }
         }
     }
 
@@ -598,26 +703,14 @@ export default function JoinMeet() {
                             <Button
                                 variant="contained"
                                 sx={{
-                                    backgroundColor: "#6c757d",
+                                    backgroundColor: isAccept ? "#007bff" : "#d3d3d3",
                                     textTransform: "none",
                                     gap: "5px",
-                                    "&:hover": { backgroundColor: "#5a6268" },
-                                }}
-                            >
-                                <DescriptionOutlinedIcon sx={{ fontSize: "18px" }} />
-                                Edit Points
-                            </Button>
-                            <Button
-                                variant="contained"
-                                sx={{
-                                    backgroundColor: isAccpet ? "#007bff" : "#d3d3d3",
-                                    textTransform: "none",
-                                    gap: "5px",
-                                    "&:hover": { backgroundColor: isAccpet ? "#0069d9" : "#d3d3d3" },
+                                    "&:hover": { backgroundColor: isAccept ? "#0069d9" : "#d3d3d3" },
                                 }}
 
                                 onClick={() => { startMeeting() }}
-                                disabled={!isAccpet}
+                                disabled={!isAccept}
                             >
                                 <AutoAwesomeOutlinedIcon sx={{ fontSize: "18px" }} />
                                 Join Meeting
@@ -641,7 +734,7 @@ export default function JoinMeet() {
                 </Box>
 
                 {/* Accept/Reject Section */}
-                {!onJoin && !isAccpet && (
+                {!onJoin && !isAccept && (
                     <Box sx={{
                         display: 'flex',
                         padding: '8px',
@@ -1018,7 +1111,7 @@ export default function JoinMeet() {
                                                                 {point.point_name}
                                                             </Typography>
                                                             {point.point_name && ForwardPointData?.forward_info && ForwardPointData.forward_info.type !== 'NIL' && (
-                                                                <Link
+                                                                <Button
                                                                     component="button"
                                                                     variant="caption"
                                                                     onClick={() => handleViewPointHistory(point.pointId, point.point_name)}
@@ -1031,7 +1124,7 @@ export default function JoinMeet() {
                                                                 >
                                                                     <HistoryIcon sx={{ fontSize: 14 }} />
                                                                     View History
-                                                                </Link>
+                                                                </Button>
                                                             )}
                                                         </Box>
                                                     </TableCell>
@@ -1097,7 +1190,7 @@ export default function JoinMeet() {
                                             <TableCell width="5%" sx={headerCellStyle}>S.No</TableCell>
                                             <TableCell width="30%" sx={headerCellStyle}>Points to be Discussed</TableCell>
                                             <TableCell width="20%" sx={headerCellStyle}>Todo</TableCell>
-                                            {isAccpet && <TableCell width="15%" sx={headerCellStyle}>Status</TableCell>}
+                                            {isAccept && <TableCell width="15%" sx={headerCellStyle}>Status</TableCell>}
                                             <TableCell width="15%" sx={headerCellStyle}>Responsibility</TableCell>
                                             <TableCell width="15%" sx={headerCellStyle}>Deadline</TableCell>
                                         </TableRow>
@@ -1129,9 +1222,20 @@ export default function JoinMeet() {
                                                         value={point.todo}
                                                         onChange={(e) => handleTodoChange(point.pointId, e.target.value)}
                                                         InputProps={{ disableUnderline: true }}
+                                                        disabled={!isAccept}
+                                                        sx={{
+                                                            opacity: isAccept ? 1 : 0.5,
+                                                            backgroundColor: isAccept ? 'transparent' : '#f0f0f0',
+                                                            pointerEvents: isAccept ? 'auto' : 'none'
+                                                        }}
                                                     />
+                                                    {!isAccept && (
+                                                        <Typography sx={{ fontSize: '11px', color: '#D97706', marginTop: '4px' }}>
+                                                            ⚠️ Accept meeting to add remarks
+                                                        </Typography>
+                                                    )}
                                                 </TableCell>
-                                                {isAccpet && (
+                                                {isAccept && (
                                                     <TableCell sx={cellStyle}>
                                                         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
                                                             {point.point_status !== "not completed" && (

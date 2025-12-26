@@ -45,8 +45,6 @@ const VotingButtons = ({
         voters_against: null
     };
 
-    console.log('VotingButtons Render:', { pointId, voting });
-
     
     // Debug logging for voter names and voting state
     // console.log('VotingButtons Debug:', {
@@ -214,7 +212,7 @@ const VotingButtons = ({
 
 
                     {/* Status message for members when voting is not active */}
-                    {!isAdmin && !voting.voting_active && meetingStatus === 'in_progress' && (
+                    {!isAdmin && !voting.voting_active && meetingStatus === 'in_progress' && voting.total_votes === 0 && (
                         <Typography variant="caption" color="text.secondary" sx={{ fontStyle: 'italic' }}>
                             Waiting for host to start voting...
                         </Typography>
@@ -271,7 +269,7 @@ const VotingButtons = ({
                     {/* Show voting section for both active voting and members waiting */}
                     {(voting.voting_active || (!isAdmin && meetingStatus === 'in_progress')) && (
                         <Box mb={2}>
-                            {!voting.voting_active && !isAdmin && (
+                            {!voting.voting_active && !isAdmin && voting.total_votes === 0 && (
                                 <Box mb={2} p={2} sx={{ backgroundColor: '#f5f5f5', borderRadius: 1, textAlign: 'center' }}>
                                     <Typography variant="body2" color="text.secondary">
                                         🕒 Waiting for meeting host to start voting on this point

@@ -9,6 +9,7 @@ import FastForwardIcon from '@mui/icons-material/FastForward';
 import OfflinePinIcon from '@mui/icons-material/OfflinePin';
 import axios from "axios";
 import { Autocomplete } from "@mui/material"; // Make sure this is imported
+import api from "../utils/apiClient"
 
 const ForwardingForm = ({ onClose, selectedAction: initialAction, remarks, pointId, selectedPoint, handleChangeStatus, submitPoints }) => {
   const [selectedOption, setSelectedOption] = useState("NIL");
@@ -87,6 +88,26 @@ const ForwardingForm = ({ onClose, selectedAction: initialAction, remarks, point
   }
   return (
     <Card sx={{ width: '100%', p: 4, borderRadius: 3, boxShadow: 3 }}>
+      {/* Warning message if no remarks */}
+      {(!remarks || remarks.trim() === '') && (
+        <Box 
+          sx={{ 
+            mb: 3, 
+            p: 2, 
+            backgroundColor: '#FFF3E0', 
+            borderRadius: 2,
+            borderLeft: '4px solid #FF9800'
+          }}
+        >
+          <Typography variant="body2" color="#E65100" sx={{ fontWeight: 'bold' }}>
+            ⚠️ Please add admin remarks before making a decision
+          </Typography>
+          <Typography variant="caption" color="text.secondary">
+            Admin remarks are required to proceed with any decision (AGREE, DISAGREE, or FORWARD).
+          </Typography>
+        </Box>
+      )}
+      
       {/* Header Section */}
       <Box display="flex" alignItems="center">
         <Button
@@ -97,9 +118,12 @@ const ForwardingForm = ({ onClose, selectedAction: initialAction, remarks, point
             borderColor: selectedAction === "DISAGREE" ? '#FB3748' : 'transparent',
             backgroundColor: selectedAction === "DISAGREE" ? '#FB37481A' : 'transparent',
             textTransform: 'none',
+            opacity: (!remarks || remarks.trim() === '') ? 0.5 : 1,
           }}
           startIcon={<CancelIcon />}
           onClick={() => handleActionClick("DISAGREE")}
+          disabled={!remarks || remarks.trim() === ''}
+          title={(!remarks || remarks.trim() === '') ? "Add admin remarks before selecting this option" : ""}
         >
           DISAGREE
         </Button>
@@ -114,9 +138,12 @@ const ForwardingForm = ({ onClose, selectedAction: initialAction, remarks, point
             borderColor: selectedAction === "FORWARD" ? '#000000' : 'transparent',
             backgroundColor: selectedAction === "FORWARD" ? '#D8DEE2' : 'transparent',
             textTransform: 'none',
+            opacity: (!remarks || remarks.trim() === '') ? 0.5 : 1,
           }}
           startIcon={<FastForwardIcon />}
           onClick={() => handleActionClick("FORWARD")}
+          disabled={!remarks || remarks.trim() === ''}
+          title={(!remarks || remarks.trim() === '') ? "Add admin remarks before selecting this option" : ""}
         >
           FORWARD
         </Button>
@@ -131,9 +158,12 @@ const ForwardingForm = ({ onClose, selectedAction: initialAction, remarks, point
             borderColor: selectedAction === "AGREE" ? '#1FC16B' : 'transparent',
             backgroundColor: selectedAction === "AGREE" ? '#1FC16B1A' : 'transparent',
             textTransform: 'none',
+            opacity: (!remarks || remarks.trim() === '') ? 0.5 : 1,
           }}
           startIcon={<OfflinePinIcon />}
           onClick={() => handleActionClick("AGREE")}
+          disabled={!remarks || remarks.trim() === ''}
+          title={(!remarks || remarks.trim() === '') ? "Add admin remarks before selecting this option" : ""}
         >
           AGREE
         </Button>

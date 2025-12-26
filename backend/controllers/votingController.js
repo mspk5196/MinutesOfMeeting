@@ -371,6 +371,11 @@ const getMeetingVotes = async (req, res) => {
             [meetingId, userId, meetingId, userId]
         );
 
+        const [meetingStatus] = await db.query(
+            `SELECT meeting_status FROM meeting WHERE id = ?`,
+            [meetingId]
+        );
+
         if (memberCheck.length === 0) {
             return res.status(403).json({
                 success: false,
@@ -404,6 +409,7 @@ const getMeetingVotes = async (req, res) => {
             success: true,
             data: {
                 meetingId: parseInt(meetingId),
+                meeting_status: meetingStatus[0],
                 points: pointsWithVotes.map(point => ({
                     pointId: point.point_id,
                     pointName: point.point_name,
