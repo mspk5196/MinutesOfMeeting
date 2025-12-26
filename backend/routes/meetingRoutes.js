@@ -33,7 +33,8 @@ const {
     respondToAlternateRequest,
     getAlternateRequests,
     getAlternateRequestsForAdmin,
-    adminApproveAlternate
+    adminApproveAlternate,
+    deletePoint
 } = require('../controllers/meetingController');
 const { isAdmin } = require('../middleware/roles');
 
@@ -65,6 +66,7 @@ router.post('/update-point', verifyToken, updatePoint)
 router.post('/get-forwarded-points', verifyToken, getForwardedPoints)
 router.post('/forward-point-approve', verifyToken, approvePointForForwarding)
 router.get('/forwarded-point-history/:pointId', verifyToken, getForwardedPointHistory)
+router.delete('/point/:pointId', verifyToken, deletePoint)
 
 // Alternate request routes
 router.post('/alternate-request/create', verifyToken, createAlternateRequest)

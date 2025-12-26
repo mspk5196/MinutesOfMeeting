@@ -21,6 +21,8 @@ import RepeatOverlay from "../components/RepeatOverlay.jsx";
 import crt from "../assets/Featured icon.png";
 import PointHistoryModal from "../components/PointHistoryModal.jsx";
 import { set } from "date-fns";
+import api from "../utils/apiClient.js";
+import { notificationManager } from "../utils/notificationManager";
 
 const Submit = () => {
   return (
@@ -97,14 +99,70 @@ export default function Cmeeting({ onBack }) {
   // Card 
   const [openSubmitCard, setOpenSubmitCard] = useState(false);
 
+  // Validation function
+  const validateMeetingForm = () => {
+    const errors = [];
+
+    // Check meeting name
+    if (!selectedMeeting || selectedMeeting.trim() === "") {
+      errors.push("Meeting name is required");
+    }
+
+    // Check date and time
+    if (!selectedDateTime || selectedDateTime.trim() === "") {
+      errors.push("Date and time are required");
+    }
+
+    // Check if at least one role with members is added
+    const rolesWithMembers = roles.filter(role => role.role && role.role.trim() !== "" && role.members && role.members.length > 0);
+    if (rolesWithMembers.length === 0) {
+      errors.push("At least one role with members must be added");
+    }
+
+    // Check for empty role names
+    const emptyRoles = roles.filter(role => !role.role || role.role.trim() === "");
+    if (emptyRoles.length > 0) {
+      errors.push("All added roles must have a name. Please fill empty role fields or remove them.");
+    }
+
+    // Check for roles without members
+    const rolesWithoutMembers = roles.filter(role => role.role && role.role.trim() !== "" && (!role.members || role.members.length === 0));
+    if (rolesWithoutMembers.length > 0) {
+      errors.push("All roles must have at least one member assigned");
+    }
+
+    // Check discussion points
+    if (discussionPoints.length === 0 || discussionPoints.every(point => !point.point || point.point.trim() === "")) {
+      errors.push("At least one discussion point must be added");
+    }
+
+    // Check priority
+    if (!priorityType || priorityType.trim() === "") {
+      errors.push("Priority type must be selected");
+    }
+
+    return errors;
+  };
+
   const handleInitiateMeeting = async () => {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
       if (!token) {
-        console.error('No authentication token found');
+        notificationManager.error('No authentication token found. Please log in again.');
+        setLoading(false);
         return;
       }
+
+      // Validate form
+      const validationErrors = validateMeetingForm();
+      if (validationErrors.length > 0) {
+        setLoading(false);
+        const errorMessage = "Please fix the following errors:\n\n" + validationErrors.map((error, index) => `${index + 1}. ${error}`).join("\n");
+        notificationManager.warning(errorMessage, 8000);
+        return;
+      }
+
       const templateId = location.state?.selectedTemplate?.backendId ||
         location.state?.selectedTemplate?.id ||
         null;
@@ -262,14 +320,26 @@ export default function Cmeeting({ onBack }) {
         console.error('Status code:', error.response.status);
         console.error('Headers:', error.response.headers);
 
-        // Show error message to user
-        alert(`Failed to create meeting: ${error.response.data.message || 'Server error'}`);
+        // Show error message to user with more specific information
+        let errorMessage = `Failed to create meeting: ${error.response.data.message || 'Server error'}`;
+        
+        if (error.response.status === 400) {
+          errorMessage = `Validation Error: ${error.response.data.message || 'Invalid data provided'}`;
+        } else if (error.response.status === 401) {
+          errorMessage = 'Unauthorized: Please log in again';
+        } else if (error.response.status === 403) {
+          errorMessage = 'Forbidden: You do not have permission to create meetings';
+        } else if (error.response.status === 500) {
+          errorMessage = 'Server Error: Please try again later';
+        }
+        
+        notificationManager.error(errorMessage);
       } else if (error.request) {
         console.error('No response received:', error.request);
-        alert('Failed to create meeting: No response from server');
+        notificationManager.error('Failed to create meeting: No response from server. Please check your internet connection.');
       } else {
         console.error('Error message:', error.message);
-        alert(`Failed to create meeting: ${error.message}`);
+        notificationManager.error(`Failed to create meeting: ${error.message}`);
       }
     } finally {
       setLoading(false);
@@ -821,7 +891,7 @@ export default function Cmeeting({ onBack }) {
       setSelectedPointHistory(response.data.history || []);
     } catch (err) {
       console.error("Error fetching point history:", err);
-      alert('Failed to fetch point history');
+      notificationManager.error('Failed to fetch point history');
     } finally {
       setHistoryLoading(false);
     }
@@ -939,7 +1009,13 @@ export default function Cmeeting({ onBack }) {
                         InputProps={{ disableUnderline: true, style: { fontStyle: 'italic' } }}
                         onChange={(e) => setSelectedMeeting(e.target.value)}
                         disabled={isPreview}
+                        sx={getFieldErrorState('name', selectedMeeting) ? { ...errorFieldStyle, padding: '8px' } : {}}
                       />
+                      {getFieldErrorState('name', selectedMeeting) && (
+                        <Typography sx={{ color: '#DC2626', fontSize: '12px', marginTop: '4px' }}>
+                          ⚠️ Meeting name is required
+                        </Typography>
+                      )}
                     </TableCell>
 
                     <TableCell sx={{ ...cellStyle, backgroundColor: '#E7E7E7', color: '#777' }}>Reference Number</TableCell>
@@ -1062,24 +1138,31 @@ export default function Cmeeting({ onBack }) {
 
                     <TableCell sx={cellStyle}>Priority Type</TableCell>
                     <TableCell sx={cellStyle}>
-                      <Select
-                        fullWidth
-                        variant="standard"
-                        value={priorityType}
-                        onChange={(e) => handleMeetingChange('priorityType', e.target.value)}
-                        sx={selectStyle}
-                        displayEmpty
-                        disabled={isPreview} // Disable in preview mode
-                      >
-                        <MenuItem disabled value="">
-                          <em>Select priority</em>
-                        </MenuItem>
-                        {priorityOptions.map((option) => (
-                          <MenuItem key={option.value} value={option.value}>
-                            {option.label}
+                      <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                        <Select
+                          fullWidth
+                          variant="standard"
+                          value={priorityType}
+                          onChange={(e) => handleMeetingChange('priorityType', e.target.value)}
+                          sx={getFieldErrorState('priority', priorityType) ? { ...selectStyle, ...errorFieldStyle, padding: '8px' } : selectStyle}
+                          displayEmpty
+                          disabled={isPreview} // Disable in preview mode
+                        >
+                          <MenuItem disabled value="">
+                            <em>Select priority</em>
                           </MenuItem>
-                        ))}
-                      </Select>
+                          {priorityOptions.map((option) => (
+                            <MenuItem key={option.value} value={option.value}>
+                              {option.label}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                        {getFieldErrorState('priority', priorityType) && (
+                          <Typography sx={{ color: '#DC2626', fontSize: '12px', marginTop: '4px' }}>
+                            ⚠️ Priority type must be selected
+                          </Typography>
+                        )}
+                      </Box>
                     </TableCell>
 
                   </TableRow>
@@ -1160,31 +1243,39 @@ export default function Cmeeting({ onBack }) {
 
                     <TableCell sx={cellStyle}>Date & Time</TableCell>
                     <TableCell sx={cellStyle}>
-                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <TextField
-                          variant="standard"
-                          placeholder="Select time"
-                          multiline
-                          fullWidth
-                          InputProps={{ disableUnderline: true, style: { fontStyle: 'italic' } }}
-                          value={selectedDateTime}
-                          onClick={() => setOpenDatetime(true)}
-                          readOnly
-                          disabled={isPreview}
-                        />
-                        {selectedDateTime && !isPreview && (
-                          <IconButton
-                            onClick={() => setSelectedDateTime("")}
-                            sx={{
-                              border: "2px solid #FB3748",
-                              borderRadius: "50%",
-                              p: "2px",
-                              marginLeft: "5px",
-                              "&:hover": { backgroundColor: "transparent" },
-                            }}
-                          >
-                            <CloseIcon sx={{ fontSize: "8px", color: "#FB3748" }} />
-                          </IconButton>
+                      <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                          <TextField
+                            variant="standard"
+                            placeholder="Select time"
+                            multiline
+                            fullWidth
+                            InputProps={{ disableUnderline: true, style: { fontStyle: 'italic' } }}
+                            value={selectedDateTime}
+                            onClick={() => setOpenDatetime(true)}
+                            readOnly
+                            disabled={isPreview}
+                            sx={getFieldErrorState('dateTime', selectedDateTime) ? { ...errorFieldStyle, padding: '8px' } : {}}
+                          />
+                          {selectedDateTime && !isPreview && (
+                            <IconButton
+                              onClick={() => setSelectedDateTime("")}
+                              sx={{
+                                border: "2px solid #FB3748",
+                                borderRadius: "50%",
+                                p: "2px",
+                                marginLeft: "5px",
+                                "&:hover": { backgroundColor: "transparent" },
+                              }}
+                            >
+                              <CloseIcon sx={{ fontSize: "8px", color: "#FB3748" }} />
+                            </IconButton>
+                          )}
+                        </Box>
+                        {getFieldErrorState('dateTime', selectedDateTime) && (
+                          <Typography sx={{ color: '#DC2626', fontSize: '12px', marginTop: '4px' }}>
+                            ⚠️ Date and time are required
+                          </Typography>
                         )}
                       </Box>
                       {openDatetime && (
@@ -1241,22 +1332,34 @@ export default function Cmeeting({ onBack }) {
                       }}
                     >
                       <TableCell sx={{ ...cellStyle, width: '20%' }}>
-                        <Box sx={rowContentStyle}>
-                          <span style={{ color: '#64748b', minWidth: '24px' }}>
-                            {getAlphabeticalIndex(index)}
-                          </span>
-                          <TextField
-                            variant="standard"
-                            placeholder="Enter title"
-                            fullWidth
-                            InputProps={{
-                              disableUnderline: true,
-                              style: { fontSize: '14px', fontWeight: 'bold', fontStyle: 'italic' }
-                            }}
-                            value={role.role}
-                            onChange={(e) => handleRoleChange(index, 'role', e.target.value)}
-                            disabled={isPreview} // Disable in preview mode
-                          />
+                        <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                          <Box sx={rowContentStyle}>
+                            <span style={{ color: '#64748b', minWidth: '24px' }}>
+                              {getAlphabeticalIndex(index)}
+                            </span>
+                            <TextField
+                              variant="standard"
+                              placeholder="Enter title"
+                              fullWidth
+                              InputProps={{
+                                disableUnderline: true,
+                                style: { fontSize: '14px', fontWeight: 'bold', fontStyle: 'italic' }
+                              }}
+                              value={role.role}
+                              onChange={(e) => handleRoleChange(index, 'role', e.target.value)}
+                              disabled={isPreview} // Disable in preview mode
+                              sx={!role.role || role.role.trim() === "" ? { ...errorFieldStyle, padding: '8px' } : {}}
+                            />
+                          </Box>
+                          {!role.role || role.role.trim() === "" ? (
+                            <Typography sx={{ color: '#DC2626', fontSize: '11px', marginTop: '4px' }}>
+                              ⚠️ Role name required
+                            </Typography>
+                          ) : role.members && role.members.length === 0 ? (
+                            <Typography sx={{ color: '#FB923C', fontSize: '11px', marginTop: '4px' }}>
+                              ⚠️ Assign members to this role
+                            </Typography>
+                          ) : null}
                         </Box>
                       </TableCell>
                       {memberSelectionCell(role, index)}
@@ -1376,16 +1479,24 @@ export default function Cmeeting({ onBack }) {
                       {memberSelectionCellSimple(index)}
 
                       <TableCell sx={{ position: "relative", ...cellStyle }}>
-                        <TextField
-                          variant="standard"
-                          placeholder="Select Date"
-                          fullWidth
-                          InputProps={{ disableUnderline: true, style: { fontStyle: 'italic' } }}
-                          value={selectedDate[index] || ""}
-                          onClick={() => setOpenDateIndex(index)}
-                          readOnly
-                          disabled={isPreview} // Disable in preview mode
-                        />
+                        <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                          <TextField
+                            variant="standard"
+                            placeholder="Select Date"
+                            fullWidth
+                            InputProps={{ disableUnderline: true, style: { fontStyle: 'italic' } }}
+                            value={selectedDate[index] || ""}
+                            onClick={() => setOpenDateIndex(index)}
+                            readOnly
+                            disabled={isPreview} // Disable in preview mode
+                            sx={item.point && item.point.trim() !== "" && (!selectedDate[index] || selectedDate[index].trim() === "") ? { ...errorFieldStyle, padding: '8px' } : {}}
+                          />
+                          {item.point && item.point.trim() !== "" && (!selectedDate[index] || selectedDate[index].trim() === "") && (
+                            <Typography sx={{ color: '#DC2626', fontSize: '12px', marginTop: '4px' }}>
+                              ⚠️ Deadline required for this point
+                            </Typography>
+                          )}
+                        </Box>
 
                         {openDateIndex === index && (
                           <Box
@@ -1647,4 +1758,31 @@ const selectStyle = {
   '& .MuiSelect-icon': {
     color: '#666'
   }
+};
+
+const getFieldErrorState = (field, value) => {
+  switch (field) {
+    case 'name':
+      return !value || value.trim() === "";
+    case 'dateTime':
+      return !value || value.trim() === "";
+    case 'priority':
+      return !value || value.trim() === "";
+    case 'role':
+      return !value || value.trim() === "";
+    case 'roleMembers':
+      return !value || value.length === 0;
+    case 'points':
+      return !value || value.every(p => !p.point || p.point.trim() === "");
+    case 'deadlines':
+      return value.some(p => p.point && p.point.trim() !== "" && (!p.deadline || p.deadline.trim() === ""));
+    default:
+      return false;
+  }
+};
+
+const errorFieldStyle = {
+  border: '2px solid #DC2626',
+  borderRadius: '4px',
+  backgroundColor: '#FEE2E2'
 };

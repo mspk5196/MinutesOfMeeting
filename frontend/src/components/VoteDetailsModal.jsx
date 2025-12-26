@@ -34,8 +34,6 @@ const VoteDetailsModal = ({ open, onClose, pointName, votingData, votersData }) 
         voters_against: []
     };
 
-    console.log(votingData, votersData);
-
     // Parse voter strings if they come as comma-separated strings
     const parseVoters = (voterString) => {
         if (!voterString) return [];
