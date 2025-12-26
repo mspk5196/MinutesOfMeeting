@@ -497,8 +497,20 @@ export default function StartMeet({ handleBack }) {
         );
         if (approvedDecision == "APPROVED") {
           handleStatusChange(index, "Approve");
+          // Update the approved_by_admin field in points state
+          setPoints(prevPoints => {
+            const updated = [...prevPoints];
+            updated[index].approved_by_admin = "APPROVED";
+            return updated;
+          });
         } else if (approvedDecision == "NOT APPROVED") {
           handleStatusChange(index, "Not Approve");
+          // Update the approved_by_admin field in points state
+          setPoints(prevPoints => {
+            const updated = [...prevPoints];
+            updated[index].approved_by_admin = "NOT APPROVED";
+            return updated;
+          });
         }
       } else {
         alert("todo is null");
@@ -617,16 +629,32 @@ export default function StartMeet({ handleBack }) {
   };
 
   const EndMeeting = executeSubmitEnd(async () => {
-    const allHaveForwardType = meetingAgenda.every(
-      (point) =>
-        point.forward_info && typeof point.forward_info.type !== "undefined"
-    );
-    const allHaveDecisionStatus = points.every(
-      (p) => p.DecisionStatus !== undefined
-    );
-    var id = meetingData.id;
-    var token = localStorage.getItem("token");
-    if (allHaveForwardType || allHaveDecisionStatus) {
+    console.log('EndMeeting called, attempting to end meeting...');
+    
+    // Simple check - just notify user that meeting is being ended
+    // The backend only checks if meeting status is "in_progress"
+    const confirmEnd = window.confirm('Are you sure you want to end this meeting?');
+    
+    if (!confirmEnd) {
+      return;
+    }
+
+    try {
+      var id = meetingData.id;
+      var token = localStorage.getItem("token");
+      
+      if (!token) {
+        alert("Authentication token not found. Please login again.");
+        return;
+      }
+
+      if (!id) {
+        alert("Meeting ID not found. Please refresh and try again.");
+        return;
+      }
+
+      console.log('Sending end meeting request for meetingId:', id);
+      
       const response = await api.post(
         `/api/meetings/end-meeting/`,
         { meetingId: id },
@@ -636,9 +664,52 @@ export default function StartMeet({ handleBack }) {
           },
         }
       );
-      navigate(`/reports/${meetingData.id}`);
-    } else {
-      alert("Fill in all points!");
+      
+      // Check if response is successful
+      if (!response || !response.data) {
+        alert("No response from server. Please try again.");
+        return;
+      }
+
+      // Navigate only on success
+      if (response.status === 200 || response.status === 201) {
+        console.log('Meeting ended successfully, navigating to reports...');
+        navigate(`/reports/${meetingData.id}`);
+      } else {
+        alert(response.data?.message || "Failed to end meeting. Please try again.");
+      }
+    } catch (error) {
+      console.error("Error ending meeting:", error);
+      
+      // Handle different error scenarios
+      if (error.response) {
+        // Server responded with error status
+        const status = error.response.status;
+        const message = error.response.data?.message;
+        
+        switch(status) {
+          case 400:
+            alert(`Bad request: ${message || 'Meeting cannot be ended or is not in progress.'}`);
+            break;
+          case 403:
+            alert(`Unauthorized: ${message || 'You do not have permission to end this meeting.'}`);
+            break;
+          case 404:
+            alert(`Not found: ${message || 'Meeting not found.'}`);
+            break;
+          case 500:
+            alert(`Server error: ${message || 'Server error occurred. Please try again later.'}`);
+            break;
+          default:
+            alert(message || `Error (${status}): Failed to end meeting.`);
+        }
+      } else if (error.request) {
+        // Request made but no response received
+        alert("No response from server. Please check your internet connection and try again.");
+      } else {
+        // Error in setting up the request
+        alert(`Error: ${error.message || 'Failed to end meeting. Please try again.'}`);
+      }
     }
   });
 

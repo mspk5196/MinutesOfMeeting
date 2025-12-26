@@ -356,8 +356,8 @@ const createMeeting = async (req, res) => {
 
         const pointPromises = points.map(point =>
             db.query(
-                'INSERT INTO meeting_points (meeting_id, point_name, point_deadline) VALUES (?, ?, ?)',
-                [meetingId, point.point_name || point.point, point.point_deadline || null]
+                'INSERT INTO meeting_points (meeting_id, point_name, point_deadline, point_responsibility) VALUES (?, ?, ?, ?)',
+                [meetingId, point.point_name || point.point, point.point_deadline || null, point.responsibility && point.responsibility.length > 0 ? point.responsibility[0] : null]
             )
         );
 
@@ -2025,11 +2025,11 @@ const endMeeting = async (req, res) => {
             });
         }
 
-        if (rows[0].meeting_status !== "in_progress") {
-            return res.status(400).json({
-                message: "Meeting cannot be ended or is not in progress."
-            });
-        }
+        // if (rows[0].meeting_status !== "in_progress") {
+        //     return res.status(400).json({
+        //         message: "Meeting cannot be ended or is not in progress."
+        //     });
+        // }
 
         // Update the meeting status to 'completed'
         const [result] = await db.query(
