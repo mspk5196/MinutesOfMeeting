@@ -8,19 +8,25 @@ import CancelIcon from '@mui/icons-material/Cancel';
 import FastForwardIcon from '@mui/icons-material/FastForward';
 import OfflinePinIcon from '@mui/icons-material/OfflinePin';
 import axios from "axios";
+import { Autocomplete } from "@mui/material";
 import api from "../utils/apiClient"
 
 const ForwardingForm = ({ onClose, selectedAction: initialAction, remarks, pointId, selectedPoint, handleChangeStatus, submitPoints }) => {
   const [selectedOption, setSelectedOption] = useState("NIL");
   const [selectedAction, setSelectedAction] = useState(initialAction || "DISAGREE");
-  // Removed SPECIFIC_MEETING and template selection
+  const [selectedTemplate, setSelectedTemplate] = useState(null);
+  const [templates, setTemplates] = useState([]);
+
+  useEffect(() => {
+    api.get('/api/templates/').then((response) => { setTemplates(response.data) });
+  }, [])
 
   const handleActionClick = (action) => {
     submitPoints()
     setSelectedAction(action);
   };
 
-  async function ForwardPoint(pointId, forwardType, forwardDecision, adminRemarks) {
+  async function ForwardPoint(pointId, templateId, forwardType, forwardDecision, adminRemarks) {
     const token = localStorage.getItem('token');
     // console.log(token)
     // console.log({
@@ -31,13 +37,15 @@ const ForwardingForm = ({ onClose, selectedAction: initialAction, remarks, point
     //   adminRemarks
     // })
     // console.log(forwardDecision)
-    // SPECIFIC_MEETING removed; always send templateId as null
+    if (forwardType != 'SPECIFIC_MEETING') {
+      templateId = null;
+    }
 
 
     try {
       await api.post('/api/meetings/forward-point', {
         pointId,
-        templateId: null,
+        templateId,
         forwardType,
         forwardDecision
       }, {
@@ -185,6 +193,33 @@ const ForwardingForm = ({ onClose, selectedAction: initialAction, remarks, point
         <Box mb={2}>
           <FormControlLabel value="NEXT" control={<Radio />} label="NEXT" />
         </Box>
+        <Box mb={2}>
+          <FormControlLabel
+            value="SPECIFIC_MEETING"
+            control={<Radio />}
+            label={
+              <Box display="flex" alignItems="center" gap={1}>
+                SPECIFIC MEETING
+                <Autocomplete
+                  disabled={selectedOption !== "SPECIFIC_MEETING"}
+                  options={templates}
+                  getOptionLabel={(option) => option.name || ""}
+                  sx={{ width: 400, marginLeft: '50px' }}
+                  size="small"
+                  renderInput={(params) => (
+                    <TextField {...params} placeholder="Select meeting" variant="outlined" />
+                  )}
+                  onChange={(event, value) => {
+                    if (value) {
+                      setSelectedTemplate(value.id)
+                      // console.log("Selected Template ID:", value.id);
+                    }
+                  }}
+                />
+              </Box>
+            }
+          />
+        </Box>
       </RadioGroup>
 
       <Box display="flex" justifyContent="end" mt={4} gap={2}>
@@ -209,7 +244,7 @@ const ForwardingForm = ({ onClose, selectedAction: initialAction, remarks, point
             textTransform: "none",
             width: "130px",
           }}
-          onClick={() => { ForwardPoint(pointId, selectedOption, selectedAction, remarks); }}
+          onClick={() => { ForwardPoint(pointId, selectedTemplate, selectedOption, selectedAction, remarks); }}
         >
           Save & Next
         </Button>

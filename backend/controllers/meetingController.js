@@ -62,45 +62,38 @@ const insertForwardedPoints = async (meetingId, templateId, userId) => {
     try {
         console.log('DEBUG insertForwardedPoints - Input:', { meetingId, templateId, userId });
         
-        const [futurePoints] = await db.query(
-            `SELECT mpf.point_id, mpf.forward_decision, mp.point_name, mp.point_responsibility, mp.point_deadline, mp.todo, mp.remarks
-             FROM meeting_point_future mpf
-             JOIN meeting_points mp ON mp.id = mpf.point_id
-             WHERE mpf.template_id = ? 
-               AND mpf.user_id = ? 
-               AND mpf.forward_type != 'NIL'
-               AND (mpf.add_point_meeting IS NULL OR LOWER(mpf.add_point_meeting) = 'false' OR mpf.add_point_meeting = '0')`,
-            [templateId, userId]
-        );
+                const [futurePoints] = await db.query(
+                        `SELECT mpf.point_id, mpf.forward_decision, mp.point_name, mp.point_responsibility, mp.point_deadline, mp.todo, mp.remarks, mpf.forward_type, mpf.add_point_meeting
+                         FROM meeting_point_future mpf
+                         JOIN meeting_points mp ON mp.id = mpf.point_id
+                         WHERE mpf.template_id = ? 
+                             AND mpf.user_id = ? 
+                             AND mpf.forward_type != 'NIL'
+                             AND (
+                                        (mpf.forward_type = 'SPECIFIC_MEETING' AND LOWER(mpf.add_point_meeting) = 'approved')
+                                 OR (mpf.forward_type <> 'SPECIFIC_MEETING' AND (mpf.add_point_meeting IS NULL OR LOWER(mpf.add_point_meeting) = 'false' OR mpf.add_point_meeting = '0'))
+                             )`,
+                        [templateId, userId]
+                );
 
         console.log('DEBUG insertForwardedPoints - Found points:', futurePoints.length, JSON.stringify(futurePoints, null, 2));
 
         for (const point of futurePoints) {
-            console.log('DEBUG insertForwardedPoints - Inserting point:', point.point_id, point.point_name);
-            
-            if (point.forward_decision === 'AGREE') {
-                const [result] = await db.query(
-                    `INSERT INTO meeting_points (meeting_id, point_name, point_responsibility, point_deadline, todo, remarks, forwarded_from_point_id)
-                     VALUES (?, ?, ?, ?, ?, ?, ?)`,
-                    [
-                        meetingId,
-                        point.point_name,
-                        point.point_responsibility,
-                        point.point_deadline,
-                        point.todo,
-                        point.remarks,
-                        point.point_id
-                    ]
-                );
-                console.log('DEBUG insertForwardedPoints - Inserted with AGREE, insertId:', result.insertId);
-            } else {
-                const [result] = await db.query(
-                    `INSERT INTO meeting_points (meeting_id, point_name, forwarded_from_point_id)
-                     VALUES (?, ?, ?)`,
-                    [meetingId, point.point_name, point.point_id]
-                );
-                console.log('DEBUG insertForwardedPoints - Inserted with FORWARD, insertId:', result.insertId);
-            }
+            console.log('DEBUG insertForwardedPoints - Inserting point:', point.point_id, point.point_name, 'decision:', point.forward_decision);
+            const [result] = await db.query(
+                `INSERT INTO meeting_points (meeting_id, point_name, point_responsibility, point_deadline, todo, remarks, forwarded_from_point_id)
+                 VALUES (?, ?, ?, ?, ?, ?, ?)`,
+                [
+                    meetingId,
+                    point.point_name,
+                    point.point_responsibility,
+                    point.point_deadline,
+                    point.todo,
+                    point.remarks,
+                    point.point_id
+                ]
+            );
+            console.log('DEBUG insertForwardedPoints - Inserted, insertId:', result.insertId);
         }
 
         if (futurePoints.length > 0) {
@@ -168,7 +161,7 @@ const approvePointForForwarding = async (req, res) => {
 
         await db.query(
             `UPDATE meeting_point_future 
-             SET add_point_meeting = 'true'
+             SET add_point_meeting = 'approved'
              WHERE point_id = ?`,
             [pointId]
         );
@@ -201,12 +194,17 @@ const getForwardedPoints = async (req, res) => {
 
     try {
         const [forwardedPoints] = await db.query(
-            `SELECT point_id, forward_type, forward_decision, point_name
-             FROM meeting_point_future JOIN
-             meeting_points ON meeting_point_future.point_id = meeting_points.id
-             WHERE template_id = ? AND user_id = ? AND forwarded_decision = 'false' AND forward_type != 'NIL'`,
+            `SELECT mpf.point_id, mpf.forward_type, mpf.forward_decision, mp.point_name
+             FROM meeting_point_future mpf
+             JOIN meeting_points mp ON mp.id = mpf.point_id
+             WHERE mpf.template_id = ? 
+               AND mpf.user_id = ? 
+               AND (mpf.add_point_meeting IS NULL OR LOWER(mpf.add_point_meeting) = 'false' OR mpf.add_point_meeting = '0')
+               AND mpf.forward_type != 'NIL'`,
             [templateId, userId]
         );
+
+        console.log('DEBUG getForwardedPoints:', { templateId, userId, count: forwardedPoints.length, points: forwardedPoints });
 
         res.json({
             forwardedCount: forwardedPoints.length,

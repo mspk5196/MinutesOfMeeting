@@ -116,14 +116,14 @@ const cloneMeetingForNextOccurrence = async (
       );
     }
 
-    // Get forwarded points from completed meeting
+    // Get ONLY NEXT-type forwarded points from completed meeting
     const [forwardedPoints] = await db.query(
       `SELECT mpf.point_id, mpf.forward_type, mpf.forward_decision, 
                     mp.point_name, mp.point_responsibility, mp.point_deadline, mp.todo, mp.remarks
              FROM meeting_point_future mpf
              JOIN meeting_points mp ON mp.id = mpf.point_id
              WHERE mpf.user_id = ? 
-               AND mpf.forward_type != 'NIL'
+               AND mpf.forward_type = 'NEXT'
                AND (mpf.add_point_meeting IS NULL OR LOWER(mpf.add_point_meeting) = 'false' OR mpf.add_point_meeting = '0')
                AND mp.meeting_id = ?`,
       [originalMeeting.created_by, completedMeetingId]
@@ -133,14 +133,13 @@ const cloneMeetingForNextOccurrence = async (
     for (const point of forwardedPoints) {
       // Carry all decisions (AGREE, DISAGREE, FORWARD) with full details
       await db.query(
-        `INSERT INTO meeting_points (meeting_id, point_name, point_responsibility, point_deadline, todo, remarks, forwarded_from_point_id)
-                     VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO meeting_points (meeting_id, point_name, point_responsibility, point_deadline, remarks, forwarded_from_point_id)
+                     VALUES (?, ?, ?, ?, ?, ?)`,
         [
           newMeetingId,
           point.point_name,
           point.point_responsibility,
           point.point_deadline,
-          point.todo,
           point.remarks,
           point.point_id
         ]

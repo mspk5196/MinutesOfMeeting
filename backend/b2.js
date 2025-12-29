@@ -20,6 +20,11 @@ app.use(cors({
     credentials: true
 }));
 
+// app.use(cors({
+//      origin: true,
+//      credentials: true
+// }));
+
 const authRoutes = require('./routes/authRoutes');
 
 app.use((req, res, next) => {
@@ -48,13 +53,7 @@ app.use((err, req, res, next) => {
 });
 
 // Enable the scheduler only if explicitly configured
-const SCHEDULER_ENABLED = process.env.SCHEDULER_ENABLED === 'true';
-if (SCHEDULER_ENABLED) {
-    initScheduler();
-    console.log('Meeting scheduler enabled');
-} else {
-    console.log('Meeting scheduler disabled');
-}
+initScheduler();
 
 const PORT = process.env.PORT;
 app.listen(PORT, () => {

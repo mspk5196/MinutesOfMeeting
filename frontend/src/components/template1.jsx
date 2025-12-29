@@ -1,13 +1,31 @@
 import { useEffect, useState } from "react";
-import { Box, Typography, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, IconButton, Card, Chip, Select, MenuItem, CircularProgress, Link } from "@mui/material";
-import Autocomplete from '@mui/material/Autocomplete';
+import {
+  Box,
+  Typography,
+  Button,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  TextField,
+  IconButton,
+  Card,
+  Chip,
+  Select,
+  MenuItem,
+  CircularProgress,
+  Link,
+} from "@mui/material";
+import Autocomplete from "@mui/material/Autocomplete";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import DvrOutlinedIcon from "@mui/icons-material/DvrOutlined";
 import DescriptionOutlinedIcon from "@mui/icons-material/DescriptionOutlined";
 import AutoAwesomeOutlinedIcon from "@mui/icons-material/AutoAwesomeOutlined";
-import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
+import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import CloseIcon from "@mui/icons-material/Close";
-import VerticalAlignBottomIcon from '@mui/icons-material/VerticalAlignBottom';
+import VerticalAlignBottomIcon from "@mui/icons-material/VerticalAlignBottom";
 import { useNavigate, useLocation } from "react-router-dom";
 import { MdDragIndicator } from "react-icons/md";
 import { FiTrash2 } from "react-icons/fi";
@@ -26,12 +44,23 @@ import { notificationManager } from "../utils/notificationManager";
 
 const Submit = () => {
   return (
-    <Card sx={{ borderRadius: "12px", boxShadow: "0px 2px 8px rgba(0, 0, 0, 0.1)", maxWidth: 400, padding: "16px" }}>
+    <Card
+      sx={{
+        borderRadius: "12px",
+        boxShadow: "0px 2px 8px rgba(0, 0, 0, 0.1)",
+        maxWidth: 400,
+        padding: "16px",
+      }}
+    >
       <img src={crt} alt="Success" style={{ width: 50, height: 50 }} />
-      <Typography sx={{ fontWeight: "bold", fontSize: "18px", marginTop: '10px' }}>
+      <Typography
+        sx={{ fontWeight: "bold", fontSize: "18px", marginTop: "10px" }}
+      >
         Meeting initiated
       </Typography>
-      <Typography sx={{ color: "#64748B", fontSize: "16px", marginTop: '15px' }}>
+      <Typography
+        sx={{ color: "#64748B", fontSize: "16px", marginTop: "15px" }}
+      >
         Created successfully members got notified the meeting.
       </Typography>
     </Card>
@@ -46,7 +75,7 @@ export default function Cmeeting({ onBack }) {
   const [selectedMeeting, setSelectedMeeting] = useState("");
   const [meetingDescription, setMeetingDescription] = useState("");
   const [forwardedPoints, setForwardedPoints] = useState([]);
-  
+
   // Point history modal state
   const [historyModalOpen, setHistoryModalOpen] = useState(false);
   const [selectedPointHistory, setSelectedPointHistory] = useState([]);
@@ -56,7 +85,7 @@ export default function Cmeeting({ onBack }) {
   useEffect(() => {
     const templateData = location.state?.selectedTemplate;
     if (templateData) {
-      if (typeof templateData === 'string') {
+      if (typeof templateData === "string") {
         setSelectedMeeting(templateData);
       } else if (templateData.backendId) {
         fetchTemplateDetails(templateData.backendId);
@@ -66,22 +95,24 @@ export default function Cmeeting({ onBack }) {
     }
     // console.log(templateData)
     const fetchForwardedPoints = async () => {
-      var token = localStorage.getItem('token')
+      var token = localStorage.getItem("token");
       try {
         const response = await api.post(
-          `/api/meetings/get-forwarded-points/`
-          , {
-            templateId: templateData.backendId
-          }, {
-          headers: {
-            Authorization: `Bearer ${token}`,
+          `/api/meetings/get-forwarded-points/`,
+          {
+            templateId: templateData.backendId,
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
           }
-        });
+        );
         //setMeetingAgenda(response.data.data.points);
         // console.log("sdfdsf", response.data)
-        setForwardedPoints(response.data.points)
+        setForwardedPoints(response.data.points);
       } catch (err) {
-        console.error(err)
+        console.error(err);
       }
     };
 
@@ -89,14 +120,14 @@ export default function Cmeeting({ onBack }) {
   }, [location.state]);
 
   const handleBack = () => {
-    navigate('/dashboardrightpanel');
+    navigate("/dashboardrightpanel");
   };
 
   const handlePreview = () => {
     setIsPreview(!isPreview); // Toggle preview mode
   };
 
-  // Card 
+  // Card
   const [openSubmitCard, setOpenSubmitCard] = useState(false);
 
   // Validation function
@@ -114,25 +145,45 @@ export default function Cmeeting({ onBack }) {
     }
 
     // Check if at least one role with members is added
-    const rolesWithMembers = roles.filter(role => role.role && role.role.trim() !== "" && role.members && role.members.length > 0);
+    const rolesWithMembers = roles.filter(
+      (role) =>
+        role.role &&
+        role.role.trim() !== "" &&
+        role.members &&
+        role.members.length > 0
+    );
     if (rolesWithMembers.length === 0) {
       errors.push("At least one role with members must be added");
     }
 
     // Check for empty role names
-    const emptyRoles = roles.filter(role => !role.role || role.role.trim() === "");
+    const emptyRoles = roles.filter(
+      (role) => !role.role || role.role.trim() === ""
+    );
     if (emptyRoles.length > 0) {
-      errors.push("All added roles must have a name. Please fill empty role fields or remove them.");
+      errors.push(
+        "All added roles must have a name. Please fill empty role fields or remove them."
+      );
     }
 
     // Check for roles without members
-    const rolesWithoutMembers = roles.filter(role => role.role && role.role.trim() !== "" && (!role.members || role.members.length === 0));
+    const rolesWithoutMembers = roles.filter(
+      (role) =>
+        role.role &&
+        role.role.trim() !== "" &&
+        (!role.members || role.members.length === 0)
+    );
     if (rolesWithoutMembers.length > 0) {
       errors.push("All roles must have at least one member assigned");
     }
 
     // Check discussion points
-    if (discussionPoints.length === 0 || discussionPoints.every(point => !point.point || point.point.trim() === "")) {
+    if (
+      discussionPoints.length === 0 ||
+      discussionPoints.every(
+        (point) => !point.point || point.point.trim() === ""
+      )
+    ) {
       errors.push("At least one discussion point must be added");
     }
 
@@ -147,9 +198,11 @@ export default function Cmeeting({ onBack }) {
   const handleInitiateMeeting = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem("token");
       if (!token) {
-        notificationManager.error('No authentication token found. Please log in again.');
+        notificationManager.error(
+          "No authentication token found. Please log in again."
+        );
         setLoading(false);
         return;
       }
@@ -158,12 +211,17 @@ export default function Cmeeting({ onBack }) {
       const validationErrors = validateMeetingForm();
       if (validationErrors.length > 0) {
         setLoading(false);
-        const errorMessage = "Please fix the following errors:\n\n" + validationErrors.map((error, index) => `${index + 1}. ${error}`).join("\n");
+        const errorMessage =
+          "Please fix the following errors:\n\n" +
+          validationErrors
+            .map((error, index) => `${index + 1}. ${error}`)
+            .join("\n");
         notificationManager.warning(errorMessage, 8000);
         return;
       }
 
-      const templateId = location.state?.selectedTemplate?.backendId ||
+      const templateId =
+        location.state?.selectedTemplate?.backendId ||
         location.state?.selectedTemplate?.id ||
         null;
 
@@ -171,7 +229,7 @@ export default function Cmeeting({ onBack }) {
       const oneHourLater = new Date(now.getTime() + 60 * 60 * 1000);
 
       const formatDate = (date) => {
-        return date.toISOString().split('.')[0];  // Remove milliseconds
+        return date.toISOString().split(".")[0]; // Remove milliseconds
       };
       // console.log(selectedDateTime)
 
@@ -199,31 +257,27 @@ export default function Cmeeting({ onBack }) {
         priority: priorityType,
         repeat_type: repeatValue,
         // Format roles data for the API
-        roles: roles.map(role => ({
+        roles: roles.map((role) => ({
           role: role.role,
-          members: role.members.map(member => member.id)
+          members: role.members.map((member) => member.id),
         })),
         // Format points data for the API
-        points: discussionPoints.map(point => ({
+        points: discussionPoints.map((point) => ({
           point: point.point,
           point_name: point.point, // Include both formats to be safe
-          point_deadline: point.deadline
-        }))
+          point_deadline: point.deadline,
+        })),
       };
 
       // console.log('Sending meeting data:', JSON.stringify(meetingData, null, 2));
 
       // Call the API to create the meeting
-      const response = await api.post(
-        '/api/meetings/create',
-        meetingData,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
+      const response = await api.post("/api/meetings/create", meetingData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
 
       // console.log('Meeting created successfully:', response.data);
 
@@ -236,21 +290,32 @@ export default function Cmeeting({ onBack }) {
       // Combine discussion points and approved forwarded points for responsibility assignment
       const allPointsWithResponsibility = [
         ...discussionPoints
-          .filter(point => point.responsibility && point.responsibility.length > 0)
-          .map((point, index) => ({ ...point, isForwarded: false, originalIndex: index })),
+          .filter(
+            (point) => point.responsibility && point.responsibility.length > 0
+          )
+          .map((point, index) => ({
+            ...point,
+            isForwarded: false,
+            originalIndex: index,
+          })),
         ...forwardedPoints
-          .filter(point => point.approved && point.responsibility && point.responsibility.length > 0)
-          .map((point) => ({ 
-            point: point.point_name, 
+          .filter(
+            (point) =>
+              point.approved &&
+              point.responsibility &&
+              point.responsibility.length > 0
+          )
+          .map((point) => ({
+            point: point.point_name,
             point_name: point.point_name,
             responsibility: point.responsibility,
             isForwarded: true,
-            point_id: point.point_id 
-          }))
+            point_id: point.point_id,
+          })),
       ];
 
-      const responsibilityPromises = allPointsWithResponsibility
-        .map(async (point, index) => {
+      const responsibilityPromises = allPointsWithResponsibility.map(
+        async (point, index) => {
           // console.log(point, index)
           try {
             // First we need to get the pointId from the backend
@@ -259,49 +324,62 @@ export default function Cmeeting({ onBack }) {
               `/api/meetings/${meetingId}/points`,
               {
                 headers: {
-                  'Authorization': `Bearer ${token}`
-                }
+                  Authorization: `Bearer ${token}`,
+                },
               }
             );
 
             let pointData;
-            
+
             if (point.isForwarded) {
               // For forwarded points, find by point_name
-              pointData = pointsResponse.data.points.find(p => p.point_name === point.point_name);
+              pointData = pointsResponse.data.points.find(
+                (p) => p.point_name === point.point_name
+              );
             } else {
               // For regular discussion points, use the index or match by text
-              pointData = pointsResponse.data.points[point.originalIndex] ||
-                pointsResponse.data.points.find(p => p.point_name === point.point);
+              pointData =
+                pointsResponse.data.points[point.originalIndex] ||
+                pointsResponse.data.points.find(
+                  (p) => p.point_name === point.point
+                );
             }
 
             if (!pointData) {
-              console.error(`Could not find point matching: ${point.point || point.point_name}`);
+              console.error(
+                `Could not find point matching: ${
+                  point.point || point.point_name
+                }`
+              );
               return;
             }
 
             // Now assign responsibility
             const responsibilityResponse = await api.post(
-              '/api/meetings/assign-responsibility',
+              "/api/meetings/assign-responsibility",
               {
                 pointId: pointData.id,
-                userId: point.responsibility[0].id
+                userId: point.responsibility[0].id,
               },
               {
                 headers: {
-                  'Authorization': `Bearer ${token}`,
-                  'Content-Type': 'application/json'
-                }
+                  Authorization: `Bearer ${token}`,
+                  "Content-Type": "application/json",
+                },
               }
             );
 
             // console.log(`Responsibility assigned for point ${index + 1}:`, responsibilityResponse.data);
             return responsibilityResponse.data;
           } catch (error) {
-            console.error(`Error assigning responsibility for point ${index + 1}:`, error);
+            console.error(
+              `Error assigning responsibility for point ${index + 1}:`,
+              error
+            );
             return null;
           }
-        });
+        }
+      );
 
       // Wait for all responsibility assignments to complete
       await Promise.all(responsibilityPromises);
@@ -309,36 +387,43 @@ export default function Cmeeting({ onBack }) {
       // Show success message and redirect
       setOpenSubmitCard(true);
       setTimeout(() => {
-        navigate('/dashboardrightpanel');
+        navigate("/dashboardrightpanel");
       }, 3000);
     } catch (error) {
-      console.error('Error creating meeting:', error);
+      console.error("Error creating meeting:", error);
 
       // Enhanced error logging
       if (error.response) {
-        console.error('Server error details:', error.response.data);
-        console.error('Status code:', error.response.status);
-        console.error('Headers:', error.response.headers);
+        console.error("Server error details:", error.response.data);
+        console.error("Status code:", error.response.status);
+        console.error("Headers:", error.response.headers);
 
         // Show error message to user with more specific information
-        let errorMessage = `Failed to create meeting: ${error.response.data.message || 'Server error'}`;
-        
+        let errorMessage = `Failed to create meeting: ${
+          error.response.data.message || "Server error"
+        }`;
+
         if (error.response.status === 400) {
-          errorMessage = `Validation Error: ${error.response.data.message || 'Invalid data provided'}`;
+          errorMessage = `Validation Error: ${
+            error.response.data.message || "Invalid data provided"
+          }`;
         } else if (error.response.status === 401) {
-          errorMessage = 'Unauthorized: Please log in again';
+          errorMessage = "Unauthorized: Please log in again";
         } else if (error.response.status === 403) {
-          errorMessage = 'Forbidden: You do not have permission to create meetings';
+          errorMessage =
+            "Forbidden: You do not have permission to create meetings";
         } else if (error.response.status === 500) {
-          errorMessage = 'Server Error: Please try again later';
+          errorMessage = "Server Error: Please try again later";
         }
-        
+
         notificationManager.error(errorMessage);
       } else if (error.request) {
-        console.error('No response received:', error.request);
-        notificationManager.error('Failed to create meeting: No response from server. Please check your internet connection.');
+        console.error("No response received:", error.request);
+        notificationManager.error(
+          "Failed to create meeting: No response from server. Please check your internet connection."
+        );
       } else {
-        console.error('Error message:', error.message);
+        console.error("Error message:", error.message);
         notificationManager.error(`Failed to create meeting: ${error.message}`);
       }
     } finally {
@@ -346,11 +431,11 @@ export default function Cmeeting({ onBack }) {
     }
   };
 
-  // Priority 
+  // Priority
   const priorityTypes = ["High Priority", "Medium Priority", "Low Priority"];
   const [selectedPriority, setSelectedPriority] = useState(null);
 
-  // Venue 
+  // Venue
   const [selectedVenue, setSelectedVenue] = useState(null);
   const [isVenueTableVisible, setIsVenueTableVisible] = useState(false);
   const handleTextFieldClick = () => setIsVenueTableVisible(true);
@@ -360,9 +445,9 @@ export default function Cmeeting({ onBack }) {
     setIsVenueTableVisible(false);
   };
 
-  // Discussion points 
+  // Discussion points
   const [discussionPoints, setDiscussionPoints] = useState([
-    { id: "01", point: "" }
+    { id: "01", point: "" },
   ]);
 
   const handleAddTopic = () => {
@@ -371,7 +456,7 @@ export default function Cmeeting({ onBack }) {
     setDiscussionPoints([...discussionPoints, newPoint]);
   };
 
-  // Datetime 
+  // Datetime
   const [openDatetime, setOpenDatetime] = useState(false);
   const [selectedDateTime, setSelectedDateTime] = useState("");
   const handleConfirm = (dateTime) => {
@@ -379,26 +464,27 @@ export default function Cmeeting({ onBack }) {
     setOpenDatetime(false);
   };
 
-  // Date 
+  // Date
   const [selectedDate, setSelectedDate] = useState({});
   const [openDateIndex, setOpenDateIndex] = useState(null);
   const handleDateConfirm = (date, index) => {
-    setSelectedDate((prev) => ({ ...prev, [index]: date.format("YYYY-MM-DD") }));
+    setSelectedDate((prev) => ({
+      ...prev,
+      [index]: date.format("YYYY-MM-DD"),
+    }));
     var discussionPointsNew = discussionPoints;
     discussionPointsNew[index].deadline = date.format("YYYY-MM-DD");
     // console.log(discussionPointsNew)
-    setDiscussionPoints(discussionPointsNew)
+    setDiscussionPoints(discussionPointsNew);
     setOpenDateIndex(null);
   };
 
-  // Repeat 
+  // Repeat
   const [openRepeat, setOpenRepeat] = useState(false);
   const [repeatValue, setRepeatValue] = useState("");
 
   // Member list functionality
-  const [roles, setRoles] = useState([
-    { role: '', members: [] }
-  ]);
+  const [roles, setRoles] = useState([{ role: "", members: [] }]);
   const handleRoleChange = (index, field, value) => {
     const newRoles = [...roles];
     newRoles[index][field] = value;
@@ -410,12 +496,12 @@ export default function Cmeeting({ onBack }) {
     setRoles(newRoles);
   };
   const addNewRole = () => {
-    setRoles(prev => [...prev, { role: '', members: [] }]);
+    setRoles((prev) => [...prev, { role: "", members: [] }]);
   };
 
   const memberSelectionCell = (role, index) => (
     <TableCell colSpan={3} sx={cellStyle}>
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+      <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
         <Autocomplete
           multiple
           value={role.members}
@@ -424,7 +510,9 @@ export default function Cmeeting({ onBack }) {
           getOptionLabel={(option) => `${option.name} | ${option.role}`}
           isOptionEqualToValue={(option, value) => option.id === value.id}
           getOptionDisabled={(option) =>
-            roles.some((r, i) => i !== index && r.members.some(m => m.id === option.id))
+            roles.some(
+              (r, i) => i !== index && r.members.some((m) => m.id === option.id)
+            )
           }
           renderInput={(params) => (
             <TextField
@@ -451,10 +539,13 @@ export default function Cmeeting({ onBack }) {
               {...props}
               style={{
                 ...props.style,
-                opacity: roles.some((r, i) =>
-                  i !== index && r.members.some(m => m.id === option.id)
-                ) ? 0.5 : 1,
-                backgroundColor: selected ? '#e8f4ff' : 'transparent',
+                opacity: roles.some(
+                  (r, i) =>
+                    i !== index && r.members.some((m) => m.id === option.id)
+                )
+                  ? 0.5
+                  : 1,
+                backgroundColor: selected ? "#e8f4ff" : "transparent",
               }}
             >
               <Box sx={styles.memberSelection.option}>
@@ -467,28 +558,29 @@ export default function Cmeeting({ onBack }) {
           )}
           filterOptions={(options, { inputValue }) => {
             const searchTerm = inputValue.toLowerCase();
-            return options.filter(option =>
-              option.name.toLowerCase().includes(searchTerm) ||
-              option.role.toLowerCase().includes(searchTerm) ||
-              option.department.toLowerCase().includes(searchTerm)
+            return options.filter(
+              (option) =>
+                option.name.toLowerCase().includes(searchTerm) ||
+                option.role.toLowerCase().includes(searchTerm) ||
+                option.department.toLowerCase().includes(searchTerm)
             );
           }}
           sx={{ flex: 1 }}
           disabled={isPreview} // Disable in preview mode
         />
         {!isPreview && ( // Conditionally render action buttons
-          <Box sx={{ display: 'flex', gap: 1 }}>
-            <Box component="span" sx={{ ...actionButtonStyle, cursor: 'grab' }}>
+          <Box sx={{ display: "flex", gap: 1 }}>
+            <Box component="span" sx={{ ...actionButtonStyle, cursor: "grab" }}>
               <MdDragIndicator size={18} />
             </Box>
             <Box
               component="span"
               sx={{
                 ...actionButtonStyle,
-                '&:hover': {
-                  backgroundColor: '#FEE2E2',
-                  color: '#DC2626'
-                }
+                "&:hover": {
+                  backgroundColor: "#FEE2E2",
+                  color: "#DC2626",
+                },
               }}
               onClick={() => deleteRole(index)}
             >
@@ -505,7 +597,7 @@ export default function Cmeeting({ onBack }) {
   };
   const handleDragOver = (e) => {
     e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
+    e.dataTransfer.dropEffect = "move";
   };
 
   const handleDragEnter = (index, type) => {
@@ -522,17 +614,17 @@ export default function Cmeeting({ onBack }) {
   const [dragOverItem, setDragOverItem] = useState(null);
 
   const handleRoleDragStart = (index) => {
-    setDragItem({ type: 'role', index });
+    setDragItem({ type: "role", index });
   };
 
   const handlePointDragStart = (index) => {
-    setDragItem({ type: 'point', index });
+    setDragItem({ type: "point", index });
   };
 
   const handleDrop = (index, type) => {
     if (!dragItem || dragItem.type !== type) return;
 
-    if (type === 'role') {
+    if (type === "role") {
       const items = [...roles];
       const draggedItem = items[dragItem.index];
       items.splice(dragItem.index, 1);
@@ -544,7 +636,7 @@ export default function Cmeeting({ onBack }) {
       items.splice(dragItem.index, 1);
       items.splice(index, 0, draggedItem);
       items.forEach((item, idx) => {
-        item.id = String(idx + 1).padStart(2, '0');
+        item.id = String(idx + 1).padStart(2, "0");
       });
       setDiscussionPoints(items);
 
@@ -565,7 +657,7 @@ export default function Cmeeting({ onBack }) {
   const deletePoint = (index) => {
     const newPoints = discussionPoints.filter((_, idx) => idx !== index);
     newPoints.forEach((point, idx) => {
-      point.id = String(idx + 1).padStart(2, '0');
+      point.id = String(idx + 1).padStart(2, "0");
     });
     setDiscussionPoints(newPoints);
   };
@@ -575,30 +667,40 @@ export default function Cmeeting({ onBack }) {
   useEffect(() => {
     const fetchMembers = async () => {
       try {
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem("token");
         if (!token) {
-          console.error('No authentication token found');
+          console.error("No authentication token found");
           return;
         }
 
-        const response = await api.get('/api/templates/users', {
+        const response = await api.get("/api/templates/users", {
           headers: {
-            'Authorization': `Bearer ${token}`
-          }
+            Authorization: `Bearer ${token}`,
+          },
         });
 
         if (response.data) {
           setAllMembers(response.data);
         }
       } catch (error) {
-        console.error('Failed to fetch members:', error);
+        console.error("Failed to fetch members:", error);
         // Fallback to sample data if API fetch fails
         setAllMembers([
-          { id: 1, name: 'Dr. Rajesh Kumar', role: 'HOD', department: 'CSE' },
-          { id: 2, name: 'Dr. Priya Sharma', role: 'Professor', department: 'IT' },
-          { id: 3, name: 'Dr. Anand Singh', role: 'Dean', department: 'ECE' },
-          { id: 4, name: 'Dr. Mary Johnson', role: 'HOD', department: 'MECH' },
-          { id: 5, name: 'Dr. David Wilson', role: 'Principal', department: 'ADMIN' },
+          { id: 1, name: "Dr. Rajesh Kumar", role: "HOD", department: "CSE" },
+          {
+            id: 2,
+            name: "Dr. Priya Sharma",
+            role: "Professor",
+            department: "IT",
+          },
+          { id: 3, name: "Dr. Anand Singh", role: "Dean", department: "ECE" },
+          { id: 4, name: "Dr. Mary Johnson", role: "HOD", department: "MECH" },
+          {
+            id: 5,
+            name: "Dr. David Wilson",
+            role: "Principal",
+            department: "ADMIN",
+          },
         ]);
       }
     };
@@ -609,60 +711,60 @@ export default function Cmeeting({ onBack }) {
   const styles = {
     memberSelection: {
       chip: {
-        margin: '2px',
-        backgroundColor: '#EBF5FF',
-        color: '#1967D2',
-        borderRadius: '16px',
-        padding: '2px 4px',
-        border: '1px solid #D1E9FF',
-        boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
-        '& .MuiChip-deleteIcon': {
-          color: '#1967D2',
-          '&:hover': {
-            color: '#DC2626'
-          }
-        },
-        '&:hover': {
-          backgroundColor: '#D1E9FF'
-        }
-      },
-      autocomplete: {
-        '& .MuiOutlinedInput-root': {
-          padding: '4px 8px',
-          '& fieldset': { border: 'none' },
-          '&:hover fieldset': { border: 'none' },
-          '&.Mui-focused fieldset': { border: 'none' }
-        },
-        '& .MuiAutocomplete-endAdornment': {
-          '& .MuiButtonBase-root': {
-            color: '#1967D2',
+        margin: "2px",
+        backgroundColor: "#EBF5FF",
+        color: "#1967D2",
+        borderRadius: "16px",
+        padding: "2px 4px",
+        border: "1px solid #D1E9FF",
+        boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
+        "& .MuiChip-deleteIcon": {
+          color: "#1967D2",
+          "&:hover": {
+            color: "#DC2626",
           },
         },
-        '& .MuiAutocomplete-clearIndicator': {
-          color: '#FC7A85',
-          '&:hover': {
-            color: '#EF4444'
-          }
-        }
+        "&:hover": {
+          backgroundColor: "#D1E9FF",
+        },
+      },
+      autocomplete: {
+        "& .MuiOutlinedInput-root": {
+          padding: "4px 8px",
+          "& fieldset": { border: "none" },
+          "&:hover fieldset": { border: "none" },
+          "&.Mui-focused fieldset": { border: "none" },
+        },
+        "& .MuiAutocomplete-endAdornment": {
+          "& .MuiButtonBase-root": {
+            color: "#1967D2",
+          },
+        },
+        "& .MuiAutocomplete-clearIndicator": {
+          color: "#FC7A85",
+          "&:hover": {
+            color: "#EF4444",
+          },
+        },
       },
       option: {
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '2px'
-      }
-    }
+        display: "flex",
+        flexDirection: "column",
+        gap: "2px",
+      },
+    },
   };
 
   const priorityOptions = [
-    { value: 'high', label: 'High Priority' },
-    { value: 'medium', label: 'Medium Priority' },
-    { value: 'low', label: 'Low Priority' }
+    { value: "high", label: "High Priority" },
+    { value: "medium", label: "Medium Priority" },
+    { value: "low", label: "Low Priority" },
   ];
 
   const [priorityType, setPriorityType] = useState("");
 
   const handleMeetingChange = (field, value) => {
-    if (field === 'priorityType') {
+    if (field === "priorityType") {
       setPriorityType(value);
     }
     // ...handle other fields if necessary...
@@ -689,7 +791,9 @@ export default function Cmeeting({ onBack }) {
             updatedPoints[index].responsibility = newValue ? [newValue] : [];
             setDiscussionPoints(updatedPoints);
           }}
-          options={allMembers.filter(member => roles.some(role => role.members.some(m => m.id === member.id)))}
+          options={allMembers.filter((member) =>
+            roles.some((role) => role.members.some((m) => m.id === member.id))
+          )}
           getOptionLabel={(option) => option.name}
           isOptionEqualToValue={(option, value) => option.id === value.id}
           renderInput={(params) => (
@@ -706,7 +810,7 @@ export default function Cmeeting({ onBack }) {
               {...props}
               style={{
                 ...props.style,
-                backgroundColor: selected ? '#e8f4ff' : 'transparent',
+                backgroundColor: selected ? "#e8f4ff" : "transparent",
               }}
             >
               <Box sx={styles.memberSelection.option}>
@@ -719,10 +823,11 @@ export default function Cmeeting({ onBack }) {
           )}
           filterOptions={(options, { inputValue }) => {
             const searchTerm = inputValue.toLowerCase();
-            return options.filter(option =>
-              option.name.toLowerCase().includes(searchTerm) ||
-              option.role.toLowerCase().includes(searchTerm) ||
-              option.department.toLowerCase().includes(searchTerm)
+            return options.filter(
+              (option) =>
+                option.name.toLowerCase().includes(searchTerm) ||
+                option.role.toLowerCase().includes(searchTerm) ||
+                option.department.toLowerCase().includes(searchTerm)
             );
           }}
           sx={{ flex: 1 }}
@@ -736,7 +841,7 @@ export default function Cmeeting({ onBack }) {
     // Fetch template details if a valid template was selected
     if (selectedMeeting && selectedMeeting.backendId) {
       fetchTemplateDetails(selectedMeeting.backendId);
-    } else if (selectedMeeting && typeof selectedMeeting === 'string') {
+    } else if (selectedMeeting && typeof selectedMeeting === "string") {
       // If only the name was passed, set it as the title
       setSelectedMeeting(selectedMeeting);
     }
@@ -747,16 +852,16 @@ export default function Cmeeting({ onBack }) {
 
     setLoading(true);
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem("token");
       if (!token) {
-        console.error('No authentication token found');
+        console.error("No authentication token found");
         return;
       }
 
       const response = await api.get(`/api/templates/${backendId}`, {
         headers: {
-          'Authorization': `Bearer ${token}`
-        }
+          Authorization: `Bearer ${token}`,
+        },
       });
 
       if (response.data) {
@@ -785,29 +890,35 @@ export default function Cmeeting({ onBack }) {
         // Set discussion points
         if (template.points && Array.isArray(template.points)) {
           const formattedPoints = template.points.map((point, index) => ({
-            id: String(index + 1).padStart(2, '0'),
-            point: point.point || ''
+            id: String(index + 1).padStart(2, "0"),
+            point: point.point || "",
           }));
           setDiscussionPoints(formattedPoints);
         }
 
         // Set roles
         if (template.roles && Array.isArray(template.roles)) {
-          const formattedRoles = template.roles.map(role => {
-            const memberObjects = role.members.map(member => {
+          const formattedRoles = template.roles.map((role) => {
+            const memberObjects = role.members.map((member) => {
               // If member is already an object
               if (member.id && member.name) {
                 return member;
               }
 
               // Otherwise, try to find the member in our local array by ID
-              const localMember = allMembers.find(m => m.id === member);
-              return localMember || { id: member, name: `Unknown (${member})`, role: 'User' };
+              const localMember = allMembers.find((m) => m.id === member);
+              return (
+                localMember || {
+                  id: member,
+                  name: `Unknown (${member})`,
+                  role: "User",
+                }
+              );
             });
 
             return {
-              role: role.role || '',
-              members: memberObjects
+              role: role.role || "",
+              members: memberObjects,
             };
           });
 
@@ -817,19 +928,18 @@ export default function Cmeeting({ onBack }) {
         }
       }
     } catch (error) {
-      console.error('Error fetching template details:', error);
+      console.error("Error fetching template details:", error);
     } finally {
       setLoading(false);
     }
   };
 
-
   const handleApprove = async (pointId, isApproved) => {
     if (isApproved) {
       // Handle approval: update backend and mark approved in UI
       // console.log("Approving point:", pointId);
-      const token = localStorage.getItem('token');
-  
+      const token = localStorage.getItem("token");
+
       try {
         const response = await api.post(
           `/api/meetings/forward-point-approve/`,
@@ -837,33 +947,36 @@ export default function Cmeeting({ onBack }) {
           {
             headers: {
               Authorization: `Bearer ${token}`,
-            }
+            },
           }
         );
         // console.log("Approval Response:", response.data);
-  
+
         // Mark the point as approved (make button green)
-        setForwardedPoints(prev =>
-          prev.map(point =>
-            point.point_id === pointId ? { ...point, approved: true, responsibility: null } : point
+        setForwardedPoints((prev) =>
+          prev.map((point) =>
+            point.point_id === pointId
+              ? { ...point, approved: true, responsibility: null }
+              : point
           )
         );
       } catch (err) {
         console.error("Approval Error:", err);
       }
-  
     } else {
       // Remove the point if not approved
       // console.log("Removing point (Not Approved):", pointId);
-      setForwardedPoints(prev => prev.filter(point => point.point_id !== pointId));
+      setForwardedPoints((prev) =>
+        prev.filter((point) => point.point_id !== pointId)
+      );
     }
   };
 
   const handleForwardedPointResponsibility = (pointId, newValue) => {
-    setForwardedPoints(prev =>
-      prev.map(point =>
-        point.point_id === pointId 
-          ? { ...point, responsibility: newValue ? [newValue] : [] } 
+    setForwardedPoints((prev) =>
+      prev.map((point) =>
+        point.point_id === pointId
+          ? { ...point, responsibility: newValue ? [newValue] : [] }
           : point
       )
     );
@@ -875,23 +988,23 @@ export default function Cmeeting({ onBack }) {
     setSelectedPointName(pointName);
     setSelectedPointHistory([]);
 
-    const token = localStorage.getItem('token');
-    
+    const token = localStorage.getItem("token");
+
     try {
       const response = await api.get(
         `/api/meetings/forwarded-point-history/${pointId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
-          }
+          },
         }
       );
-      
+
       // console.log("Point History:", response.data);
       setSelectedPointHistory(response.data.history || []);
     } catch (err) {
       console.error("Error fetching point history:", err);
-      notificationManager.error('Failed to fetch point history');
+      notificationManager.error("Failed to fetch point history");
     } finally {
       setHistoryLoading(false);
     }
@@ -902,16 +1015,22 @@ export default function Cmeeting({ onBack }) {
     setSelectedPointHistory([]);
     setSelectedPointName("");
   };
-  
-
 
   return (
     <Box>
-
       {/* top buttons */}
-      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 0" }}>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: "12px 0",
+        }}
+      >
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          <Box sx={{ display: "flex", padding: "5px", backgroundColor: "white" }}>
+          <Box
+            sx={{ display: "flex", padding: "5px", backgroundColor: "white" }}
+          >
             <ArrowBackIcon sx={{ cursor: "pointer" }} onClick={handleBack} />
           </Box>
           <Typography variant="h6" fontWeight="bold">
@@ -919,8 +1038,19 @@ export default function Cmeeting({ onBack }) {
           </Typography>
         </Box>
 
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1, padding: "6px", backgroundColor: "white", borderRadius: "8px", marginRight: '60px' }}>
-          <Button variant="outlined"
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            gap: 1,
+            padding: "6px",
+            backgroundColor: "white",
+            borderRadius: "8px",
+            marginRight: "60px",
+          }}
+        >
+          <Button
+            variant="outlined"
             sx={{ textTransform: "none", gap: "5px" }}
             onClick={handlePreview}
           >
@@ -935,7 +1065,7 @@ export default function Cmeeting({ onBack }) {
                 textTransform: "none",
                 gap: "5px",
                 "&:hover": { backgroundColor: "#0069d9" },
-                width: '300px'
+                width: "300px",
               }}
             >
               <VerticalAlignBottomIcon sx={{ fontSize: "18px" }} />
@@ -946,10 +1076,14 @@ export default function Cmeeting({ onBack }) {
               <Button
                 variant="contained"
                 sx={{
-                  backgroundColor: "#6c757d", textTransform: "none", gap: "5px",
+                  backgroundColor: "#6c757d",
+                  textTransform: "none",
+                  gap: "5px",
                   "&:hover": { backgroundColor: "#5a6268" },
                 }}
-                onClick={() => { console.log("Save as Draft") }}
+                onClick={() => {
+                  console.log("Save as Draft");
+                }}
               >
                 <DescriptionOutlinedIcon sx={{ fontSize: "18px" }} />
                 Save as Draft
@@ -974,29 +1108,74 @@ export default function Cmeeting({ onBack }) {
 
       {openSubmitCard && (
         <Box
-          sx={{ position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh", backgroundColor: "rgba(0, 0, 0, 0.5)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 999 }}>
+          sx={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100vw",
+            height: "100vh",
+            backgroundColor: "rgba(0, 0, 0, 0.5)",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 999,
+          }}
+        >
           <Box
-            sx={{ backgroundColor: "white", padding: "16px", borderRadius: "12px" }}>
+            sx={{
+              backgroundColor: "white",
+              padding: "16px",
+              borderRadius: "12px",
+            }}
+          >
             <Submit />
           </Box>
         </Box>
       )}
 
-      <Box sx={{ display: "flex", backgroundColor: "white", justifyContent: "center", alignItems: "center", flexDirection: 'column', width: "90%", margin: "0 auto", paddingX: '40px' }}>
-        <img src={image} alt="Example" style={{ width: "50%", height: "50%", padding: "10px" }} />
+      <Box
+        sx={{
+          display: "flex",
+          backgroundColor: "white",
+          justifyContent: "center",
+          alignItems: "center",
+          flexDirection: "column",
+          width: "90%",
+          margin: "0 auto",
+          paddingX: "40px",
+        }}
+      >
+        <img
+          src={image}
+          alt="Example"
+          style={{ width: "50%", height: "50%", padding: "10px" }}
+        />
 
         {loading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '300px' }}>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              height: "300px",
+            }}
+          >
             <CircularProgress />
             <Typography sx={{ ml: 2 }}>Loading template details...</Typography>
           </Box>
         ) : (
           <>
             {/* First Part */}
-            <TableContainer sx={{ margin: "auto", mt: 3, border: "1px solid #ddd", borderBottom: 'none' }}>
+            <TableContainer
+              sx={{
+                margin: "auto",
+                mt: 3,
+                border: "1px solid #ddd",
+                borderBottom: "none",
+              }}
+            >
               <Table sx={{ borderCollapse: "collapse" }}>
                 <TableBody>
-
                   {/* Meeting Details */}
                   <TableRow>
                     <TableCell sx={cellStyle}>Name of the Meeting</TableCell>
@@ -1006,33 +1185,54 @@ export default function Cmeeting({ onBack }) {
                         placeholder="Ex..8th BoS Meeting"
                         fullWidth
                         value={selectedMeeting}
-                        InputProps={{ disableUnderline: true, style: { fontStyle: 'italic' } }}
+                        InputProps={{
+                          disableUnderline: true,
+                          style: { fontStyle: "italic" },
+                        }}
                         onChange={(e) => setSelectedMeeting(e.target.value)}
                         disabled={isPreview}
-                        sx={getFieldErrorState('name', selectedMeeting) ? { ...errorFieldStyle, padding: '8px' } : {}}
+                        sx={
+                          getFieldErrorState("name", selectedMeeting)
+                            ? { ...errorFieldStyle, padding: "8px" }
+                            : {}
+                        }
                       />
-                      {getFieldErrorState('name', selectedMeeting) && (
-                        <Typography sx={{ color: '#DC2626', fontSize: '12px', marginTop: '4px' }}>
+                      {getFieldErrorState("name", selectedMeeting) && (
+                        <Typography
+                          sx={{
+                            color: "#DC2626",
+                            fontSize: "12px",
+                            marginTop: "4px",
+                          }}
+                        >
                           ⚠️ Meeting name is required
                         </Typography>
                       )}
                     </TableCell>
 
-                    <TableCell sx={{ ...cellStyle, backgroundColor: '#E7E7E7', color: '#777' }}>Reference Number</TableCell>
-                    <TableCell sx={{ ...cellStyle, backgroundColor: '#E7E7E7' }}>
+                    <TableCell
+                      sx={{
+                        ...cellStyle,
+                        backgroundColor: "#E7E7E7",
+                        color: "#777",
+                      }}
+                    >
+                      Reference Number
+                    </TableCell>
+                    <TableCell
+                      sx={{ ...cellStyle, backgroundColor: "#E7E7E7" }}
+                    >
                       <TextField
                         variant="standard"
                         placeholder="Auto generate"
                         fullWidth
                         InputProps={{
                           disableUnderline: true,
-                          sx: { fontStyle: 'italic', color: '#777' }
+                          sx: { fontStyle: "italic", color: "#777" },
                         }}
                         disabled={true}
-
                       />
                     </TableCell>
-
                   </TableRow>
 
                   <TableRow>
@@ -1048,7 +1248,7 @@ export default function Cmeeting({ onBack }) {
                         onChange={(e) => setMeetingDescription(e.target.value)}
                         InputProps={{
                           disableUnderline: true,
-                          sx: { fontStyle: 'italic', color: '#555' }
+                          sx: { fontStyle: "italic", color: "#555" },
                         }}
                         disabled={isPreview} // Disable in preview mode
                       />
@@ -1057,7 +1257,6 @@ export default function Cmeeting({ onBack }) {
 
                   {/* Types */}
                   <TableRow>
-
                     <TableCell sx={cellStyle}>Repeat Type</TableCell>
                     <TableCell sx={{ position: "relative", ...cellStyle }}>
                       {repeatValue ? (
@@ -1069,10 +1268,12 @@ export default function Cmeeting({ onBack }) {
                             bgcolor: "#f0f8ff",
                             padding: "6px 12px",
                             width: "fit-content",
-                            minWidth: "10px"
+                            minWidth: "10px",
                           }}
                         >
-                          <Typography sx={{ color: "#175CD3", fontSize: "12px" }}>
+                          <Typography
+                            sx={{ color: "#175CD3", fontSize: "12px" }}
+                          >
                             {repeatValue}
                           </Typography>
                           <IconButton
@@ -1081,18 +1282,23 @@ export default function Cmeeting({ onBack }) {
                               borderRadius: "50%",
                               p: "2px",
                               marginLeft: "5px",
-                              "&:hover": { backgroundColor: "transparent" }
+                              "&:hover": { backgroundColor: "transparent" },
                             }}
                             onClick={() => setRepeatValue("")}
                           >
-                            <CloseIcon sx={{ fontSize: "8px", color: "#FB3748" }} />
+                            <CloseIcon
+                              sx={{ fontSize: "8px", color: "#FB3748" }}
+                            />
                           </IconButton>
                         </Box>
                       ) : (
                         <TextField
                           placeholder="Ex..Monthly"
                           variant="standard"
-                          InputProps={{ disableUnderline: true, style: { fontStyle: 'italic' } }}
+                          InputProps={{
+                            disableUnderline: true,
+                            style: { fontStyle: "italic" },
+                          }}
                           value={repeatValue}
                           onClick={() => setOpenRepeat(true)}
                           disabled={isPreview} // Disable in preview mode
@@ -1138,13 +1344,23 @@ export default function Cmeeting({ onBack }) {
 
                     <TableCell sx={cellStyle}>Priority Type</TableCell>
                     <TableCell sx={cellStyle}>
-                      <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                      <Box sx={{ display: "flex", flexDirection: "column" }}>
                         <Select
                           fullWidth
                           variant="standard"
                           value={priorityType}
-                          onChange={(e) => handleMeetingChange('priorityType', e.target.value)}
-                          sx={getFieldErrorState('priority', priorityType) ? { ...selectStyle, ...errorFieldStyle, padding: '8px' } : selectStyle}
+                          onChange={(e) =>
+                            handleMeetingChange("priorityType", e.target.value)
+                          }
+                          sx={
+                            getFieldErrorState("priority", priorityType)
+                              ? {
+                                  ...selectStyle,
+                                  ...errorFieldStyle,
+                                  padding: "8px",
+                                }
+                              : selectStyle
+                          }
                           displayEmpty
                           disabled={isPreview} // Disable in preview mode
                         >
@@ -1157,63 +1373,125 @@ export default function Cmeeting({ onBack }) {
                             </MenuItem>
                           ))}
                         </Select>
-                        {getFieldErrorState('priority', priorityType) && (
-                          <Typography sx={{ color: '#DC2626', fontSize: '12px', marginTop: '4px' }}>
+                        {getFieldErrorState("priority", priorityType) && (
+                          <Typography
+                            sx={{
+                              color: "#DC2626",
+                              fontSize: "12px",
+                              marginTop: "4px",
+                            }}
+                          >
                             ⚠️ Priority type must be selected
                           </Typography>
                         )}
                       </Box>
                     </TableCell>
-
                   </TableRow>
 
                   {/* Details */}
                   <TableRow>
-
                     <TableCell sx={cellStyle}>Venue Details</TableCell>
                     <TableCell sx={{ position: "relative", ...cellStyle }}>
-                      {selectedVenue ? (
-                        <Box
-                          sx={{
-                            display: "flex",
-                            alignItems: "center",
-                            borderRadius: "20px",
-                            bgcolor: "#f0f8ff",
-                            padding: "6px 12px",
-                            width: "fit-content"
-                          }}
-                        >
-                          <Typography sx={{ color: "#175CD3", fontSize: "12px" }}>
-                            {selectedVenue.name}
-                          </Typography>
-                          <IconButton
+                      <Box sx={{ display: "flex", flexDirection: "column" }}>
+                        {selectedVenue ? (
+                          <Box
                             sx={{
-                              border: "2px solid #FB3748",
-                              borderRadius: "50%",
-                              p: "2px",
-                              marginLeft: "5px",
-                              "&:hover": { backgroundColor: "transparent" },
+                              display: "flex",
+                              alignItems: "center",
+                              borderRadius: "8px",
+                              bgcolor: "#e8f5ff",
+                              padding: "10px 14px",
+                              width: "fit-content",
+                              border: "1px solid #b3d9ff",
+                              boxShadow: "0 1px 3px rgba(0, 0, 0, 0.08)",
                             }}
-                            onClick={() => setSelectedVenue(null)}
-                            disabled={isPreview} // Disable in preview mode
                           >
-                            <CloseIcon sx={{ fontSize: "8px", color: "#FB3748" }} />
-                          </IconButton>
-                        </Box>
-                      ) : (
-                        <TextField
-                          variant="standard"
-                          placeholder="Select venue"
-                          fullWidth
-                          InputProps={{
-                            disableUnderline: true,
-                            style: { color: "#999", fontStyle: 'italic' }
-                          }}
-                          onClick={handleTextFieldClick}
-                          readOnly
-                          disabled={isPreview} // Disable in preview mode
-                        />
-                      )}
+                            <Box
+                              sx={{
+                                width: "8px",
+                                height: "8px",
+                                borderRadius: "50%",
+                                backgroundColor: "#1976d2",
+                                marginRight: "8px",
+                              }}
+                            />
+                            <Typography
+                              sx={{
+                                color: "#1565c0",
+                                fontSize: "14px",
+                                fontWeight: 500,
+                              }}
+                            >
+                              {selectedVenue.name}
+                            </Typography>
+                            <IconButton
+                              size="small"
+                              sx={{
+                                border: "1px solid #ef5350",
+                                borderRadius: "50%",
+                                p: "2px",
+                                marginLeft: "8px",
+                                backgroundColor: "#ffebee",
+                                "&:hover": {
+                                  backgroundColor: "#ffcdd2",
+                                  border: "1px solid #e53935",
+                                },
+                              }}
+                              onClick={() => setSelectedVenue(null)}
+                              disabled={isPreview}
+                            >
+                              <CloseIcon
+                                sx={{ fontSize: "14px", color: "#c62828" }}
+                              />
+                            </IconButton>
+                          </Box>
+                        ) : (
+                          <TextField
+                            variant="outlined"
+                            placeholder="Click to select venue"
+                            fullWidth
+                            size="small"
+                            InputProps={{
+                              style: {
+                                color: "#666",
+                                fontStyle: "italic",
+                                fontSize: "14px",
+                              },
+                            }}
+                            onClick={handleTextFieldClick}
+                            readOnly
+                            disabled={isPreview}
+                            sx={{
+                              "& .MuiOutlinedInput-root": {
+                                borderRadius: "8px",
+                                backgroundColor: "#fafafa",
+                                transition: "all 0.2s",
+                                "&:hover": {
+                                  backgroundColor: "#f5f5f5",
+                                  borderColor: "#1976d2",
+                                },
+                                "&.Mui-focused": {
+                                  backgroundColor: "#ffffff",
+                                },
+                              },
+                              "& .MuiOutlinedInput-notchedOutline": {
+                                borderColor: "#d0d0d0",
+                              },
+                            }}
+                          />
+                        )}
+                        {!selectedVenue && !isPreview && (
+                          <Typography
+                            sx={{
+                              color: "#999",
+                              fontSize: "11px",
+                              marginTop: "4px",
+                            }}
+                          >
+                            📍 Select a venue for the meeting
+                          </Typography>
+                        )}
+                      </Box>
 
                       {isVenueTableVisible && (
                         <Box
@@ -1234,28 +1512,37 @@ export default function Cmeeting({ onBack }) {
                           <Box
                             onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside
                           >
-                            <VenueTable onVenueSelect={handleVenueSelect} onClose={handleCloseVenueTable} />
+                            <VenueTable
+                              onVenueSelect={handleVenueSelect}
+                              onClose={handleCloseVenueTable}
+                            />
                           </Box>
                         </Box>
                       )}
                     </TableCell>
 
-
                     <TableCell sx={cellStyle}>Date & Time</TableCell>
                     <TableCell sx={cellStyle}>
-                      <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <Box sx={{ display: "flex", flexDirection: "column" }}>
+                        <Box sx={{ display: "flex", alignItems: "center" }}>
                           <TextField
                             variant="standard"
                             placeholder="Select time"
                             multiline
                             fullWidth
-                            InputProps={{ disableUnderline: true, style: { fontStyle: 'italic' } }}
+                            InputProps={{
+                              disableUnderline: true,
+                              style: { fontStyle: "italic" },
+                            }}
                             value={selectedDateTime}
                             onClick={() => setOpenDatetime(true)}
                             readOnly
                             disabled={isPreview}
-                            sx={getFieldErrorState('dateTime', selectedDateTime) ? { ...errorFieldStyle, padding: '8px' } : {}}
+                            sx={
+                              getFieldErrorState("dateTime", selectedDateTime)
+                                ? { ...errorFieldStyle, padding: "8px" }
+                                : {}
+                            }
                           />
                           {selectedDateTime && !isPreview && (
                             <IconButton
@@ -1268,12 +1555,20 @@ export default function Cmeeting({ onBack }) {
                                 "&:hover": { backgroundColor: "transparent" },
                               }}
                             >
-                              <CloseIcon sx={{ fontSize: "8px", color: "#FB3748" }} />
+                              <CloseIcon
+                                sx={{ fontSize: "8px", color: "#FB3748" }}
+                              />
                             </IconButton>
                           )}
                         </Box>
-                        {getFieldErrorState('dateTime', selectedDateTime) && (
-                          <Typography sx={{ color: '#DC2626', fontSize: '12px', marginTop: '4px' }}>
+                        {getFieldErrorState("dateTime", selectedDateTime) && (
+                          <Typography
+                            sx={{
+                              color: "#DC2626",
+                              fontSize: "12px",
+                              marginTop: "4px",
+                            }}
+                          >
                             ⚠️ Date and time are required
                           </Typography>
                         )}
@@ -1294,31 +1589,20 @@ export default function Cmeeting({ onBack }) {
                           }}
                           onClick={() => setOpenDatetime(false)}
                         >
-                          <Box
-                            sx={{
-                              position: "relative",
-                              zIndex: 1301,
-                              backgroundColor: "white",
-                              borderRadius: "12px",
-                              padding: "32px",
-                              maxWidth: "600px",
-                              width: "90%",
-                              boxShadow: "0 10px 40px rgba(0, 0, 0, 0.3)",
-                            }}
-                            onClick={(e) => e.stopPropagation()}
-                          >
+                          <Box onClick={(e) => e.stopPropagation()}>
                             <DateTimePicker onConfirm={handleConfirm} />
                           </Box>
                         </Box>
                       )}
                     </TableCell>
-
                   </TableRow>
 
                   {/* roles */}
                   <TableRow sx={{ backgroundColor: "#f0f0f0" }}>
                     <TableCell sx={headerStyle}>Roles</TableCell>
-                    <TableCell colSpan={3} sx={headerStyle}>Member list</TableCell>
+                    <TableCell colSpan={3} sx={headerStyle}>
+                      Member list
+                    </TableCell>
                   </TableRow>
 
                   {roles.map((role, index) => (
@@ -1327,20 +1611,23 @@ export default function Cmeeting({ onBack }) {
                       draggable // Add this line
                       onDragStart={() => handleRoleDragStart(index)}
                       onDragOver={handleDragOver}
-                      onDragEnter={() => handleDragEnter(index, 'role')}
+                      onDragEnter={() => handleDragEnter(index, "role")}
                       onDragLeave={handleDragLeave}
-                      onDrop={() => handleDrop(index, 'role')}
+                      onDrop={() => handleDrop(index, "role")}
                       sx={{
-                        '&:hover .actions': {
-                          opacity: 1
+                        "&:hover .actions": {
+                          opacity: 1,
                         },
-                        backgroundColor: dragOverItem === index ? '#f0f0f0' : 'transparent'
+                        backgroundColor:
+                          dragOverItem === index ? "#f0f0f0" : "transparent",
                       }}
                     >
-                      <TableCell sx={{ ...cellStyle, width: '20%' }}>
-                        <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                      <TableCell sx={{ ...cellStyle, width: "20%" }}>
+                        <Box sx={{ display: "flex", flexDirection: "column" }}>
                           <Box sx={rowContentStyle}>
-                            <span style={{ color: '#64748b', minWidth: '24px' }}>
+                            <span
+                              style={{ color: "#64748b", minWidth: "24px" }}
+                            >
                               {getAlphabeticalIndex(index)}
                             </span>
                             <TextField
@@ -1349,20 +1636,42 @@ export default function Cmeeting({ onBack }) {
                               fullWidth
                               InputProps={{
                                 disableUnderline: true,
-                                style: { fontSize: '14px', fontWeight: 'bold', fontStyle: 'italic' }
+                                style: {
+                                  fontSize: "14px",
+                                  fontWeight: "bold",
+                                  fontStyle: "italic",
+                                },
                               }}
                               value={role.role}
-                              onChange={(e) => handleRoleChange(index, 'role', e.target.value)}
+                              onChange={(e) =>
+                                handleRoleChange(index, "role", e.target.value)
+                              }
                               disabled={isPreview} // Disable in preview mode
-                              sx={!role.role || role.role.trim() === "" ? { ...errorFieldStyle, padding: '8px' } : {}}
+                              sx={
+                                !role.role || role.role.trim() === ""
+                                  ? { ...errorFieldStyle, padding: "8px" }
+                                  : {}
+                              }
                             />
                           </Box>
                           {!role.role || role.role.trim() === "" ? (
-                            <Typography sx={{ color: '#DC2626', fontSize: '11px', marginTop: '4px' }}>
+                            <Typography
+                              sx={{
+                                color: "#DC2626",
+                                fontSize: "11px",
+                                marginTop: "4px",
+                              }}
+                            >
                               ⚠️ Role name required
                             </Typography>
                           ) : role.members && role.members.length === 0 ? (
-                            <Typography sx={{ color: '#FB923C', fontSize: '11px', marginTop: '4px' }}>
+                            <Typography
+                              sx={{
+                                color: "#FB923C",
+                                fontSize: "11px",
+                                marginTop: "4px",
+                              }}
+                            >
                               ⚠️ Assign members to this role
                             </Typography>
                           ) : null}
@@ -1374,7 +1683,17 @@ export default function Cmeeting({ onBack }) {
                   {!isPreview && (
                     <TableRow>
                       <TableCell colSpan={4} sx={{ border: 0, padding: 0 }}>
-                        <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", border: "2px dashed #1976d2", margin: "auto", padding: "8px", color: "#1976d2", cursor: "pointer" }}
+                        <Box
+                          sx={{
+                            display: "flex",
+                            justifyContent: "center",
+                            alignItems: "center",
+                            border: "2px dashed #1976d2",
+                            margin: "auto",
+                            padding: "8px",
+                            color: "#1976d2",
+                            cursor: "pointer",
+                          }}
                           onClick={addNewRole}
                         >
                           <AddCircleOutlineIcon sx={{ marginRight: 1 }} />
@@ -1383,46 +1702,66 @@ export default function Cmeeting({ onBack }) {
                       </TableCell>
                     </TableRow>
                   )}
-
                 </TableBody>
               </Table>
             </TableContainer>
 
             {/* Second Part */}
-            <TableContainer sx={{ margin: "auto", border: "1px solid #ddd", borderTop: "none" }}>
+            <TableContainer
+              sx={{
+                margin: "auto",
+                border: "1px solid #ddd",
+                borderTop: "none",
+              }}
+            >
               <Table sx={{ borderCollapse: "collapse" }}>
-
                 <TableHead>
                   <TableRow>
-                    <TableCell width="5%" sx={headerCellStyle}>S.No</TableCell>
-                    <TableCell width="30%" sx={headerCellStyle}>Points to be Discussed</TableCell>
-                    <TableCell width="20%" sx={{ ...headerCellStyle }}>Todo</TableCell>
-                    <TableCell width="20%" sx={headerCellStyle}>Responsibility</TableCell>
-                    <TableCell width="20%" sx={headerCellStyle}>Deadline</TableCell>
+                    <TableCell width="5%" sx={headerCellStyle}>
+                      S.No
+                    </TableCell>
+                    <TableCell width="30%" sx={headerCellStyle}>
+                      Points to be Discussed
+                    </TableCell>
+                    <TableCell width="20%" sx={{ ...headerCellStyle }}>
+                      Todo
+                    </TableCell>
+                    <TableCell width="20%" sx={headerCellStyle}>
+                      Responsibility
+                    </TableCell>
+                    <TableCell width="20%" sx={headerCellStyle}>
+                      Deadline
+                    </TableCell>
                   </TableRow>
                 </TableHead>
 
                 <TableBody>
-
                   {discussionPoints.map((item, index) => (
                     <TableRow
                       key={item.id}
                       draggable // Add this line
                       onDragStart={() => handlePointDragStart(index)}
                       onDragOver={handleDragOver}
-                      onDragEnter={() => handleDragEnter(index, 'point')}
+                      onDragEnter={() => handleDragEnter(index, "point")}
                       onDragLeave={handleDragLeave}
-                      onDrop={() => handleDrop(index, 'point')}
+                      onDrop={() => handleDrop(index, "point")}
                       sx={{
-                        '&:hover .actions': {
-                          opacity: 1
+                        "&:hover .actions": {
+                          opacity: 1,
                         },
-                        backgroundColor: dragOverItem === index ? '#f0f0f0' : 'transparent'
+                        backgroundColor:
+                          dragOverItem === index ? "#f0f0f0" : "transparent",
                       }}
                     >
                       <TableCell sx={cellStyle}>{item.id}</TableCell>
 
-                      <TableCell sx={{ ...cellStyle, fontWeight: "normal", maxWidth: "300px" }}>
+                      <TableCell
+                        sx={{
+                          ...cellStyle,
+                          fontWeight: "normal",
+                          maxWidth: "300px",
+                        }}
+                      >
                         <Box sx={rowContentStyle}>
                           <TextField
                             variant="standard"
@@ -1433,7 +1772,11 @@ export default function Cmeeting({ onBack }) {
                             maxRows={4}
                             InputProps={{
                               disableUnderline: true,
-                              sx: { fontSize: '14px', fontWeight: 'bold', fontStyle: 'italic' }
+                              sx: {
+                                fontSize: "14px",
+                                fontWeight: "bold",
+                                fontStyle: "italic",
+                              },
                             }}
                             value={item.point}
                             onChange={(e) => {
@@ -1445,17 +1788,21 @@ export default function Cmeeting({ onBack }) {
                           />
                           {!isPreview && (
                             <Box className="actions" sx={actionsWrapperStyle}>
-                              <Box component="span" sx={{ ...actionButtonStyle, cursor: 'grab' }} onMouseDown={() => handlePointDragStart(index)}>
+                              <Box
+                                component="span"
+                                sx={{ ...actionButtonStyle, cursor: "grab" }}
+                                onMouseDown={() => handlePointDragStart(index)}
+                              >
                                 <MdDragIndicator size={18} />
                               </Box>
                               <Box
                                 component="span"
                                 sx={{
                                   ...actionButtonStyle,
-                                  '&:hover': {
-                                    backgroundColor: '#FEE2E2',
-                                    color: '#DC2626'
-                                  }
+                                  "&:hover": {
+                                    backgroundColor: "#FEE2E2",
+                                    color: "#DC2626",
+                                  },
                                 }}
                                 onClick={() => deletePoint(index)}
                               >
@@ -1466,12 +1813,17 @@ export default function Cmeeting({ onBack }) {
                         </Box>
                       </TableCell>
 
-                      <TableCell sx={{ ...cellStyle, backgroundColor: '#E7E7E7' }}>
+                      <TableCell
+                        sx={{ ...cellStyle, backgroundColor: "#E7E7E7" }}
+                      >
                         <TextField
                           variant="standard"
                           placeholder="Add remarks"
                           fullWidth
-                          InputProps={{ disableUnderline: true, style: { fontStyle: 'italic' } }}
+                          InputProps={{
+                            disableUnderline: true,
+                            style: { fontStyle: "italic" },
+                          }}
                           value={item.todo || ""}
                           onChange={(e) => {
                             const updatedPoints = [...discussionPoints];
@@ -1485,23 +1837,42 @@ export default function Cmeeting({ onBack }) {
                       {memberSelectionCellSimple(index)}
 
                       <TableCell sx={{ position: "relative", ...cellStyle }}>
-                        <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                        <Box sx={{ display: "flex", flexDirection: "column" }}>
                           <TextField
                             variant="standard"
                             placeholder="Select Date"
                             fullWidth
-                            InputProps={{ disableUnderline: true, style: { fontStyle: 'italic' } }}
+                            InputProps={{
+                              disableUnderline: true,
+                              style: { fontStyle: "italic" },
+                            }}
                             value={selectedDate[index] || ""}
                             onClick={() => setOpenDateIndex(index)}
                             readOnly
                             disabled={isPreview} // Disable in preview mode
-                            sx={item.point && item.point.trim() !== "" && (!selectedDate[index] || selectedDate[index].trim() === "") ? { ...errorFieldStyle, padding: '8px' } : {}}
+                            sx={
+                              item.point &&
+                              item.point.trim() !== "" &&
+                              (!selectedDate[index] ||
+                                selectedDate[index].trim() === "")
+                                ? { ...errorFieldStyle, padding: "8px" }
+                                : {}
+                            }
                           />
-                          {item.point && item.point.trim() !== "" && (!selectedDate[index] || selectedDate[index].trim() === "") && (
-                            <Typography sx={{ color: '#DC2626', fontSize: '12px', marginTop: '4px' }}>
-                              ⚠️ Deadline required for this point
-                            </Typography>
-                          )}
+                          {item.point &&
+                            item.point.trim() !== "" &&
+                            (!selectedDate[index] ||
+                              selectedDate[index].trim() === "") && (
+                              <Typography
+                                sx={{
+                                  color: "#DC2626",
+                                  fontSize: "12px",
+                                  marginTop: "4px",
+                                }}
+                              >
+                                ⚠️ Deadline required for this point
+                              </Typography>
+                            )}
                         </Box>
 
                         {openDateIndex === index && (
@@ -1520,24 +1891,33 @@ export default function Cmeeting({ onBack }) {
                             }}
                             onClick={() => setOpenDateIndex(null)}
                           >
-                            <Box
-                              onClick={(e) => e.stopPropagation()}
-                            >
+                            <Box onClick={(e) => e.stopPropagation()}>
                               <DatePick
-                                onConfirm={(date) => handleDateConfirm(date, index)}
+                                onConfirm={(date) =>
+                                  handleDateConfirm(date, index)
+                                }
                                 onClose={() => setOpenDateIndex(null)}
                               />
                             </Box>
                           </Box>
                         )}
                       </TableCell>
-
                     </TableRow>
                   ))}
                   {!isPreview && (
                     <TableRow>
                       <TableCell colSpan={5} sx={{ border: 0, padding: 0 }}>
-                        <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", border: "2px dashed #1976d2", margin: "auto", padding: "8px", color: "#1976d2", cursor: "pointer" }}
+                        <Box
+                          sx={{
+                            display: "flex",
+                            justifyContent: "center",
+                            alignItems: "center",
+                            border: "2px dashed #1976d2",
+                            margin: "auto",
+                            padding: "8px",
+                            color: "#1976d2",
+                            cursor: "pointer",
+                          }}
                           onClick={handleAddTopic}
                         >
                           <AddCircleOutlineIcon sx={{ marginRight: 1 }} />
@@ -1547,14 +1927,13 @@ export default function Cmeeting({ onBack }) {
                     </TableRow>
                   )}
                 </TableBody>
-
               </Table>
             </TableContainer>
           </>
         )}
 
         {forwardedPoints.length > 0 && (
-          <TableContainer sx={{ border: "1px solid #ddd", marginTop: '20px' }}>
+          <TableContainer sx={{ border: "1px solid #ddd", marginTop: "20px" }}>
             <Table sx={{ borderCollapse: "collapse" }}>
               <TableHead>
                 <TableRow>
@@ -1572,39 +1951,62 @@ export default function Cmeeting({ onBack }) {
                       <Link
                         component="button"
                         variant="body1"
-                        onClick={() => handleViewPointHistory(point.point_id, point.point_name)}
+                        onClick={() =>
+                          handleViewPointHistory(
+                            point.point_id,
+                            point.point_name
+                          )
+                        }
                         sx={{
-                          textDecoration: 'none',
-                          color: '#1976d2',
-                          fontWeight: 'bold',
-                          cursor: 'pointer',
-                          '&:hover': {
-                            textDecoration: 'underline',
-                            color: '#1565c0'
-                          }
+                          textDecoration: "none",
+                          color: "#1976d2",
+                          fontWeight: "bold",
+                          cursor: "pointer",
+                          "&:hover": {
+                            textDecoration: "underline",
+                            color: "#1565c0",
+                          },
                         }}
                       >
                         {point.point_name}
                       </Link>
                     </TableCell>
                     <TableCell sx={cellStyle}>{point.forward_type}</TableCell>
-                    <TableCell sx={cellStyle}>{point.forward_decision}</TableCell>
+                    <TableCell sx={cellStyle}>
+                      {point.forward_decision}
+                    </TableCell>
                     <TableCell sx={cellStyle}>
                       {point.approved ? (
                         point.responsibility?.length > 0 ? (
                           <Chip
                             label={point.responsibility[0].name}
                             sx={styles.memberSelection.chip}
-                            onDelete={() => handleForwardedPointResponsibility(point.point_id, null)}
+                            onDelete={() =>
+                              handleForwardedPointResponsibility(
+                                point.point_id,
+                                null
+                              )
+                            }
                             disabled={isPreview}
                           />
                         ) : (
                           <Autocomplete
                             value={point.responsibility?.[0] || null}
-                            onChange={(event, newValue) => handleForwardedPointResponsibility(point.point_id, newValue)}
-                            options={allMembers.filter(member => roles.some(role => role.members.some(m => m.id === member.id)))}
+                            onChange={(event, newValue) =>
+                              handleForwardedPointResponsibility(
+                                point.point_id,
+                                newValue
+                              )
+                            }
+                            options={allMembers.filter((member) =>
+                              roles.some((role) =>
+                                role.members.some((m) => m.id === member.id)
+                              )
+                            )}
                             getOptionLabel={(option) => option.name}
-                            isOptionEqualToValue={(option, value) => option.id === value.id}
+                            isOptionEqualToValue={(option, value) =>
+                              option.id === value.id
+                            }
                             renderInput={(params) => (
                               <TextField
                                 {...params}
@@ -1619,12 +2021,19 @@ export default function Cmeeting({ onBack }) {
                                 {...props}
                                 style={{
                                   ...props.style,
-                                  backgroundColor: selected ? '#e8f4ff' : 'transparent',
+                                  backgroundColor: selected
+                                    ? "#e8f4ff"
+                                    : "transparent",
                                 }}
                               >
                                 <Box sx={styles.memberSelection.option}>
-                                  <Typography sx={{ fontWeight: 500 }}>{option.name}</Typography>
-                                  <Typography variant="caption" color="text.secondary">
+                                  <Typography sx={{ fontWeight: 500 }}>
+                                    {option.name}
+                                  </Typography>
+                                  <Typography
+                                    variant="caption"
+                                    color="text.secondary"
+                                  >
                                     {option.role} • {option.department}
                                   </Typography>
                                 </Box>
@@ -1632,10 +2041,17 @@ export default function Cmeeting({ onBack }) {
                             )}
                             filterOptions={(options, { inputValue }) => {
                               const searchTerm = inputValue.toLowerCase();
-                              return options.filter(option =>
-                                option.name.toLowerCase().includes(searchTerm) ||
-                                option.role.toLowerCase().includes(searchTerm) ||
-                                option.department.toLowerCase().includes(searchTerm)
+                              return options.filter(
+                                (option) =>
+                                  option.name
+                                    .toLowerCase()
+                                    .includes(searchTerm) ||
+                                  option.role
+                                    .toLowerCase()
+                                    .includes(searchTerm) ||
+                                  option.department
+                                    .toLowerCase()
+                                    .includes(searchTerm)
                               );
                             }}
                             sx={{ minWidth: 200 }}
@@ -1673,8 +2089,6 @@ export default function Cmeeting({ onBack }) {
             </Table>
           </TableContainer>
         )}
-
-
       </Box>
 
       {/* Point History Modal */}
@@ -1685,7 +2099,6 @@ export default function Cmeeting({ onBack }) {
         loading={historyLoading}
         pointName={selectedPointName}
       />
-
     </Box>
   );
 }
@@ -1710,85 +2123,90 @@ const headerCellStyle = {
 };
 
 const rowContentStyle = {
-  display: 'flex',
-  alignItems: 'center',
-  gap: '8px'
+  display: "flex",
+  alignItems: "center",
+  gap: "8px",
 };
 
 const inputStyle = {
-  fontSize: '14px',
-  fontWeight: 'bold'
+  fontSize: "14px",
+  fontWeight: "bold",
 };
 
 const blueButtonStyle = {
-  backgroundColor: '#e6f0ff',
-  color: '#0070f3',
-  textTransform: 'none',
-  fontWeight: 'bold',
-  '&:hover': {
-    backgroundColor: '#cce0ff'
-  }
+  backgroundColor: "#e6f0ff",
+  color: "#0070f3",
+  textTransform: "none",
+  fontWeight: "bold",
+  "&:hover": {
+    backgroundColor: "#cce0ff",
+  },
 };
 
 const actionButtonStyle = {
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  width: '24px',
-  height: '24px',
-  borderRadius: '50%',
-  backgroundColor: '#F3F4F6',
-  color: '#6B7280',
-  cursor: 'pointer',
-  transition: 'background-color 0.2s, color 0.2s'
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  width: "24px",
+  height: "24px",
+  borderRadius: "50%",
+  backgroundColor: "#F3F4F6",
+  color: "#6B7280",
+  cursor: "pointer",
+  transition: "background-color 0.2s, color 0.2s",
 };
 
 const actionsWrapperStyle = {
-  display: 'flex',
-  alignItems: 'center',
-  gap: '8px',
+  display: "flex",
+  alignItems: "center",
+  gap: "8px",
   opacity: 0,
-  transition: 'opacity 0.2s'
+  transition: "opacity 0.2s",
 };
 
 const selectStyle = {
   fontSize: "0.95rem",
-  '.MuiSelect-select': {
-    padding: '2px 8px',
-    color: '#666',
-    fontStyle: 'italic',
+  ".MuiSelect-select": {
+    padding: "2px 8px",
+    color: "#666",
+    fontStyle: "italic",
   },
-  '&:before, &:after': {
-    display: 'none'
+  "&:before, &:after": {
+    display: "none",
   },
-  '& .MuiSelect-icon': {
-    color: '#666'
-  }
+  "& .MuiSelect-icon": {
+    color: "#666",
+  },
 };
 
 const getFieldErrorState = (field, value) => {
   switch (field) {
-    case 'name':
+    case "name":
       return !value || value.trim() === "";
-    case 'dateTime':
+    case "dateTime":
       return !value || value.trim() === "";
-    case 'priority':
+    case "priority":
       return !value || value.trim() === "";
-    case 'role':
+    case "role":
       return !value || value.trim() === "";
-    case 'roleMembers':
+    case "roleMembers":
       return !value || value.length === 0;
-    case 'points':
-      return !value || value.every(p => !p.point || p.point.trim() === "");
-    case 'deadlines':
-      return value.some(p => p.point && p.point.trim() !== "" && (!p.deadline || p.deadline.trim() === ""));
+    case "points":
+      return !value || value.every((p) => !p.point || p.point.trim() === "");
+    case "deadlines":
+      return value.some(
+        (p) =>
+          p.point &&
+          p.point.trim() !== "" &&
+          (!p.deadline || p.deadline.trim() === "")
+      );
     default:
       return false;
   }
 };
 
 const errorFieldStyle = {
-  border: '2px solid #DC2626',
-  borderRadius: '4px',
-  backgroundColor: '#FEE2E2'
+  border: "2px solid #DC2626",
+  borderRadius: "4px",
+  backgroundColor: "#FEE2E2",
 };
