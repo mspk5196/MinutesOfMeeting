@@ -111,6 +111,13 @@
   padding: 8px;
   position: relative;
   overflow: visible;
+  background-color: white;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.day-cell:hover {
+  background-color: #f9fafb;
 }
 
 .day-cell:nth-child(7n) {
@@ -121,6 +128,16 @@
   font-size: 16px;
   margin-bottom: 8px;
   color: #333;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+}
+
+.day-cell.different-month {
+  background-color: #fafafa;
 }
 
 .day-cell.different-month .day-number {
@@ -129,6 +146,19 @@
 
 .day-cell.today {
   background-color: #e8f5fe;
+}
+
+/* Visual indicator for days with meetings */
+.day-cell.has-meeting .day-number::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 6px;
+  height: 6px;
+  background-color: #4285f4;
+  border-radius: 50%;
 }
 
 .day-cell.selected {

@@ -6,34 +6,10 @@ import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import CalendarMonthOutlinedIcon from '@mui/icons-material/CalendarMonthOutlined';
 import { Button, Typography } from "@mui/material";
 import EventCard from './EventCard';
+import { api } from '../utils/apiClient';
 
-// Dummy meetings data
-const dummyMeetings = [
-  {
-    id: '1',
-    title: "BOS Meeting",
-    start: new Date().setHours(10, 30),
-    end: new Date().setHours(11, 30),
-    type: "bos",
-    color: "purple"
-  },
-  {
-    id: '2',
-    title: "Grievance Meeting",
-    start: new Date().setHours(10, 30),
-    end: new Date().setHours(11, 30),
-    type: "grievance",
-    color: "orange"
-  },
-  {
-    id: '3',
-    title: "Academic Council",
-    start: new Date().setHours(14, 30),
-    end: new Date().setHours(15, 30),
-    type: "academic",
-    color: "blue"
-  }
-];
+// Colors for meetings
+const AVAILABLE_COLORS = ['blue', 'green', 'purple', 'orange'];
 
 
 
@@ -234,7 +210,69 @@ const DashboardRightPanel = ({ setDate }) => {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showCreateMeeting, setShowCreateMeeting] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [meetings, setMeetings] = useState(dummyMeetings);
+  const [meetings, setMeetings] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch meetings from backend
+  const fetchMeetings = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await api.get('/api/meetings/get-user-meetings', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        }
+      });
+
+      if (response.data.success) {
+        let formattedMeetings = [];
+
+        // Sort meetings by start time
+        const sortedMeetings = [...response.data.meetings].sort((a, b) =>
+          new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
+        );
+
+        // Color cycling logic
+        let colorIndex = 0;
+
+        // Process each meeting
+        sortedMeetings.forEach(meeting => {
+          const color = AVAILABLE_COLORS[colorIndex % AVAILABLE_COLORS.length];
+          colorIndex++;
+
+          const formattedMeeting = {
+            id: meeting.id,
+            title: meeting.meeting_name,
+            start: new Date(meeting.start_time),
+            end: new Date(meeting.end_time),
+            type: meeting.role,
+            color: color,
+            location: meeting.venue_name,
+            description: meeting.meeting_description || "No description available",
+            priority: meeting.priority,
+            status: meeting.meeting_status,
+            repeat_type: meeting.repeat_type,
+            members: meeting.members,
+            points: meeting.points,
+            host_name: meeting.created_by
+          };
+
+          formattedMeetings.push(formattedMeeting);
+        });
+
+        setMeetings(formattedMeetings);
+      }
+    } catch (error) {
+      console.error("Failed to fetch meetings:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch meetings on mount
+  useEffect(() => {
+    fetchMeetings();
+  }, []);
+
   // Update current time every minute
   useEffect(() => {
     const interval = setInterval(() => {
@@ -255,9 +293,11 @@ const DashboardRightPanel = ({ setDate }) => {
     const endMinutes = meetingEnd.getHours() * 60 + meetingEnd.getMinutes();
 
     // Show meetings that:
-    // 1. End after current time (not completed)
-    // 2. Fall within the visible time window
-    return endMinutes > currentTime.getHours() * 60 + currentTime.getMinutes() &&
+    // 1. Are not completed
+    // 2. End after current time
+    // 3. Fall within the visible time window
+    return meeting.status !== 'completed' &&
+      endMinutes > currentTime.getHours() * 60 + currentTime.getMinutes() &&
       startMinutes <= timeWindow.endMinutes &&
       endMinutes >= timeWindow.startMinutes;
   });
@@ -382,33 +422,50 @@ const DashboardRightPanel = ({ setDate }) => {
               {weekDays.map(day => (
                 <div key={day} style={{ textAlign: 'center', fontWeight: 600, color: '#666', padding: '0.25rem', fontSize: '0.75rem' }}>{day}</div>
               ))}
-              {days.map(day => (
-                <div
-                  key={day.toString()}
-                  style={{
-                    aspectRatio: 1,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    cursor: 'pointer',
-                    borderRadius: '50%',
-                    position: 'relative',
-                    fontSize: '0.875rem',
-                    color: isSameMonth(day, selectedDate) ? '#1a1a1a' : '#ccc',
-                    width: '30px',
-                    height: '30px',
-                    margin: 'auto',
-                    backgroundColor: isSameDay(day, selectedDate) ? '#4299e1' : 'transparent'
-                  }}
-                  onClick={() => { setSelectedDate(day); setDate(day); }}
-                >
-                  {format(day, 'd')}
-                  {meetings.some(meeting => isSameDay(meeting.date, day)) && (
-                    <div style={{ width: '3px', height: '3px', backgroundColor: '#e1a942', borderRadius: '50%', position: 'absolute', bottom: '2px' }} />
-                  )}
-                </div>
-              ))}
+              {days.map(day => {
+                const hasMeeting = meetings.some(meeting => {
+                  const meetingDate = meeting.start instanceof Date ? meeting.start : new Date(meeting.start);
+                  return isSameDay(meetingDate, day) && meeting.status !== 'completed';
+                });
+                const isSelected = isSameDay(day, selectedDate);
+                const isCurrentMonth = isSameMonth(day, selectedDate);
+                
+                return (
+                  <div
+                    key={day.toString()}
+                    style={{
+                      aspectRatio: 1,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: 'pointer',
+                      borderRadius: '50%',
+                      position: 'relative',
+                      fontSize: '0.875rem',
+                      color: isSelected ? '#ffffff' : (isCurrentMonth ? '#1a1a1a' : '#ccc'),
+                      width: '30px',
+                      height: '30px',
+                      margin: 'auto',
+                      backgroundColor: isSelected ? '#4299e1' : '#ffffff',
+                      transition: 'background-color 0.2s'
+                    }}
+                    onClick={() => { setSelectedDate(day); setDate(day); }}
+                  >
+                    {format(day, 'd')}
+                    {hasMeeting && !isSelected && (
+                      <div style={{ 
+                        width: '5px', 
+                        height: '5px', 
+                        backgroundColor: '#4285f4', 
+                        borderRadius: '50%', 
+                        position: 'absolute', 
+                        bottom: '3px' 
+                      }} />
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
 

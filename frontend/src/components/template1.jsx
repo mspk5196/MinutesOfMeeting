@@ -1298,6 +1298,12 @@ export default function Cmeeting({ onBack }) {
                             sx={{
                               position: "relative",
                               zIndex: 1301,
+                              backgroundColor: "white",
+                              borderRadius: "12px",
+                              padding: "32px",
+                              maxWidth: "600px",
+                              width: "90%",
+                              boxShadow: "0 10px 40px rgba(0, 0, 0, 0.3)",
                             }}
                             onClick={(e) => e.stopPropagation()}
                           >

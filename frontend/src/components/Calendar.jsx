@@ -325,11 +325,12 @@ const Calendar = ({ initialDate = new Date() }) => {
           {days.map((day, index) => {
             const dayEvents = getEventsForDay(day.date);
             const isCurrentDay = isToday(day.date);
+            const hasMeeting = dayEvents.length > 0;
 
             return (
               <div
                 key={index}
-                className={`day-cell ${day.month !== 'current' ? 'different-month' : ''} ${isCurrentDay ? 'today' : ''}`}
+                className={`day-cell ${day.month !== 'current' ? 'different-month' : ''} ${isCurrentDay ? 'today' : ''} ${hasMeeting ? 'has-meeting' : ''}`}
                 onClick={() => handleDayClick(day.date)}
               >
                 <div className={`day-number ${isCurrentDay ? 'current-day' : ''}`}>

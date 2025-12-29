@@ -19,6 +19,7 @@ import HistoryIcon from '@mui/icons-material/History';
 import image from "../assets/bannariammanheader.png";
 import format from "date-fns/format";
 import { useSubmitGuard } from "../hooks/useSubmitGuard";
+import { notificationManager } from "../utils/notificationManager";
 
 const Reject = ({ onClose, handleSave }) => {
     return (
@@ -583,30 +584,41 @@ export default function JoinMeet() {
             });
 
             if (!response.data) {
-                alert('Failed to fetch meeting details. Please try again.');
+                notificationManager.error('Failed to fetch meeting details. Please try again.');
                 return;
             }
 
+            // Block joining future-dated meetings
+            const meetingStart = response.data.start_time ? new Date(response.data.start_time) : null;
+                // if (meetingStart) {
+                //     const today = new Date();
+                //     today.setHours(23, 59, 59, 999); // end of today
+                //     if (meetingStart > today) {
+                //         notificationManager.error('Cannot join a meeting scheduled for a future date.');
+                //         return;
+                //     }
+                // }
+
             if (response.data.meeting_status === 'not_started') {
-                alert('Meeting has not started yet. Please wait for the organizer to start it.');
+                notificationManager.info('Meeting has not started yet. Please wait for the organizer to start it.');
             } else if (response.data.meeting_status === 'in_progress') {
                 await joinMeeting('joined');
                 setOnJoin(true);
             } else if (response.data.meeting_status === 'completed') {
-                alert('This meeting has already been completed.');
+                notificationManager.warning('This meeting has already been completed.');
             } else {
-                alert(`Unknown meeting status: ${response.data.meeting_status}`);
+                notificationManager.error(`Unknown meeting status: ${response.data.meeting_status}`);
             }
         } catch (error) {
             console.error('Error fetching meeting:', error);
             if (error.response?.status === 401) {
-                alert('Session expired. Please log in again.');
+                notificationManager.error('Session expired. Please log in again.');
             } else if (error.response?.status === 403) {
-                alert('You do not have permission to join this meeting.');
+                notificationManager.error('You do not have permission to join this meeting.');
             } else if (error.response?.status === 404) {
-                alert('Meeting not found.');
+                notificationManager.error('Meeting not found.');
             } else {
-                alert(`Error joining meeting: ${error.response?.data?.message || error.message}`);
+                notificationManager.error(`Error joining meeting: ${error.response?.data?.message || error.message}`);
             }
         }
     }
@@ -1132,36 +1144,92 @@ export default function JoinMeet() {
                                                     <TableCell sx={{ ...cellStyle, textAlign: "center" }}>
                                                         <Box
                                                             sx={{
-                                                                color:
-                                                                    ForwardPointData?.forward_info?.decision === "agree"
-                                                                        ? "green"
-                                                                        : ForwardPointData?.forward_info?.decision === "not agree"
-                                                                            ? "red"
-                                                                            : ForwardPointData?.forward_info?.decision === "forward"
-                                                                                ? "gray"
-                                                                                : "inherit",
-                                                                fontWeight: "bold",
+                                                                display: 'flex',
+                                                                flexDirection: 'column',
+                                                                gap: 1,
+                                                                alignItems: 'center'
                                                             }}
                                                         >
-                                                            {ForwardPointData?.forward_info?.decision || "-"}
-                                                        </Box>
+                                                            {/* Status Badge */}
+                                                            <Box
+                                                                sx={{
+                                                                    display: 'inline-flex',
+                                                                    alignItems: 'center',
+                                                                    gap: 0.5,
+                                                                    padding: '6px 14px',
+                                                                    borderRadius: '20px',
+                                                                    fontWeight: 600,
+                                                                    fontSize: '12px',
+                                                                    backgroundColor:
+                                                                        ForwardPointData?.forward_info?.decision === "agree"
+                                                                            ? "#d4edda"
+                                                                            : ForwardPointData?.forward_info?.decision === "not agree"
+                                                                                ? "#f8d7da"
+                                                                                : ForwardPointData?.forward_info?.decision === "forward"
+                                                                                    ? "#e2e3e5"
+                                                                                    : "#f0f0f0",
+                                                                    color:
+                                                                        ForwardPointData?.forward_info?.decision === "agree"
+                                                                            ? "#155724"
+                                                                            : ForwardPointData?.forward_info?.decision === "not agree"
+                                                                                ? "#721c24"
+                                                                                : ForwardPointData?.forward_info?.decision === "forward"
+                                                                                    ? "#383d41"
+                                                                                    : "#555",
+                                                                    border:
+                                                                        ForwardPointData?.forward_info?.decision === "agree"
+                                                                            ? "1px solid #c3e6cb"
+                                                                            : ForwardPointData?.forward_info?.decision === "not agree"
+                                                                                ? "1px solid #f5c6cb"
+                                                                                : ForwardPointData?.forward_info?.decision === "forward"
+                                                                                    ? "1px solid #d6d8db"
+                                                                                    : "1px solid #e0e0e0"
+                                                                }}
+                                                            >
+                                                                {ForwardPointData?.forward_info?.decision === "agree" && "✓"}
+                                                                {ForwardPointData?.forward_info?.decision === "not agree" && "✗"}
+                                                                {ForwardPointData?.forward_info?.decision === "forward" && "→"}
+                                                                {ForwardPointData?.forward_info?.decision || "-"}
+                                                            </Box>
 
-                                                        <Box sx={{ mt: 1 }}>
-                                                            {ForwardPointData?.forward_info?.text?.includes("FORWARDnext") ? (
-                                                                <>
-                                                                    <div>
-                                                                        {
-                                                                            ForwardPointData?.forward_info?.text.split("FORWARDnext")[0]
-                                                                        }
-                                                                    </div>
-                                                                    <div style={{ fontWeight: "bold", color: "gray" }}>
-                                                                        FORWARDnext
-                                                                        {ForwardPointData?.forward_info?.text.split("FORWARDnext")[1]}
-                                                                    </div>
-                                                                </>
-                                                            ) : (
-                                                                <div>{ForwardPointData?.forward_info?.text}</div>
-                                                            )}
+                                                            {/* Forwarded Text */}
+                                                            <Box
+                                                                sx={{
+                                                                    width: '100%',
+                                                                    padding: '8px 10px',
+                                                                    backgroundColor: '#f9f9f9',
+                                                                    borderRadius: '6px',
+                                                                    border: '1px solid #e0e0e0',
+                                                                    fontSize: '12px',
+                                                                    lineHeight: '1.5',
+                                                                    color: '#333'
+                                                                }}
+                                                            >
+                                                                {ForwardPointData?.forward_info?.text?.includes("FORWARDnext") ? (
+                                                                    <>
+                                                                        <div style={{ marginBottom: '6px' }}>
+                                                                            {ForwardPointData?.forward_info?.text.split("FORWARDnext")[0]}
+                                                                        </div>
+                                                                        <div
+                                                                            style={{
+                                                                                fontWeight: 600,
+                                                                                color: "#1976d2",
+                                                                                padding: '4px 8px',
+                                                                                backgroundColor: '#e3f2fd',
+                                                                                borderRadius: '4px',
+                                                                                borderLeft: '3px solid #1976d2'
+                                                                            }}
+                                                                        >
+                                                                            📋 FORWARDnext
+                                                                            {ForwardPointData?.forward_info?.text.split("FORWARDnext")[1]}
+                                                                        </div>
+                                                                    </>
+                                                                ) : ForwardPointData?.forward_info?.text ? (
+                                                                    <div>{ForwardPointData?.forward_info?.text}</div>
+                                                                ) : (
+                                                                    <div style={{ color: '#999' }}>-</div>
+                                                                )}
+                                                            </Box>
                                                         </Box>
                                                     </TableCell>
 

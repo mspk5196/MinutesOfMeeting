@@ -747,17 +747,6 @@ export default function Cmeeting({ onBack }) {
               <Button
                 variant="contained"
                 sx={{
-                  backgroundColor: "#6c757d", textTransform: "none", gap: "5px",
-                  "&:hover": { backgroundColor: "#5a6268" },
-                }}
-                onClick={() => {console.log("Save as Draft")}}
-              >
-                <DescriptionOutlinedIcon sx={{ fontSize: "18px" }} />
-                Save as Draft
-              </Button>
-              <Button
-                variant="contained"
-                sx={{
                   backgroundColor: "#007bff",
                   textTransform: "none",
                   gap: "5px",

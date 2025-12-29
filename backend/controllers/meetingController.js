@@ -1,7 +1,6 @@
 const db = require('../config/db');
-const {
-    format
-} = require("date-fns");
+const { format } = require("date-fns");
+const { cloneMeetingForNextOccurrence, calculateNextSchedule } = require('../scheduler/cronJob');
 const jwt = require('jsonwebtoken');
 const { sendMeetingInvitation } = require('../services/emailService');
 
@@ -61,42 +60,46 @@ function groupMembersByRole(data) {
 
 const insertForwardedPoints = async (meetingId, templateId, userId) => {
     try {
+        console.log('DEBUG insertForwardedPoints - Input:', { meetingId, templateId, userId });
+        
         const [futurePoints] = await db.query(
-            `SELECT mpf.point_id, mpf.forwarded_decision, mp.point_name, mp.point_responsibility, mp.point_deadline, mp.todo, mp.remarks
+            `SELECT mpf.point_id, mpf.forward_decision, mp.point_name, mp.point_responsibility, mp.point_deadline, mp.todo, mp.remarks
              FROM meeting_point_future mpf
              JOIN meeting_points mp ON mp.id = mpf.point_id
              WHERE mpf.template_id = ? 
                AND mpf.user_id = ? 
-               AND mpf.forwarded_decision = 'false' 
                AND mpf.forward_type != 'NIL'
-               AND mpf.add_point_meeting = 'true'`,
+               AND (mpf.add_point_meeting IS NULL OR LOWER(mpf.add_point_meeting) = 'false' OR mpf.add_point_meeting = '0')`,
             [templateId, userId]
         );
 
-
-
-        // console.log(userId, meetingId, templateId, futurePoints);
+        console.log('DEBUG insertForwardedPoints - Found points:', futurePoints.length, JSON.stringify(futurePoints, null, 2));
 
         for (const point of futurePoints) {
-            if (point.forwarded_decision === 'AGREE') {
-                await db.query(
-                    `INSERT INTO meeting_points (meeting_id, point_name, point_responsibility, point_deadline, todo, remarks)
-                     VALUES (?, ?, ?, ?, ?, ?)`,
+            console.log('DEBUG insertForwardedPoints - Inserting point:', point.point_id, point.point_name);
+            
+            if (point.forward_decision === 'AGREE') {
+                const [result] = await db.query(
+                    `INSERT INTO meeting_points (meeting_id, point_name, point_responsibility, point_deadline, todo, remarks, forwarded_from_point_id)
+                     VALUES (?, ?, ?, ?, ?, ?, ?)`,
                     [
                         meetingId,
                         point.point_name,
                         point.point_responsibility,
                         point.point_deadline,
                         point.todo,
-                        point.remarks
+                        point.remarks,
+                        point.point_id
                     ]
                 );
+                console.log('DEBUG insertForwardedPoints - Inserted with AGREE, insertId:', result.insertId);
             } else {
-                await db.query(
-                    `INSERT INTO meeting_points (meeting_id, point_name)
-                     VALUES (?, ?)`,
-                    [meetingId, point.point_name]
+                const [result] = await db.query(
+                    `INSERT INTO meeting_points (meeting_id, point_name, forwarded_from_point_id)
+                     VALUES (?, ?, ?)`,
+                    [meetingId, point.point_name, point.point_id]
                 );
+                console.log('DEBUG insertForwardedPoints - Inserted with FORWARD, insertId:', result.insertId);
             }
         }
 
@@ -104,12 +107,14 @@ const insertForwardedPoints = async (meetingId, templateId, userId) => {
             const pointIds = futurePoints.map(p => p.point_id);
             await db.query(
                 `UPDATE meeting_point_future 
-                 SET forwarded_decision = 'true'
+                 SET add_point_meeting = 'true'
                  WHERE template_id = ? AND user_id = ? AND point_id IN (?)`,
                 [templateId, userId, pointIds]
             );
 
-            // console.log(`Forwarded ${futurePoints.length} points to meeting ${meetingId}.`);
+            console.log(`Forwarded ${futurePoints.length} points to meeting ${meetingId}.`);
+        } else {
+            console.log('DEBUG insertForwardedPoints - No points found to forward');
         }
 
     } catch (error) {
@@ -300,6 +305,18 @@ const createMeeting = async (req, res) => {
 
         const template = templateRows[0];
 
+        // Calculate next_schedule based on repeat_type
+        let nextScheduleDate = new Date(start_time);
+        if (repeat_type === 'weekly') {
+            nextScheduleDate.setDate(nextScheduleDate.getDate() + 7);
+        } else if (repeat_type === 'monthly') {
+            nextScheduleDate.setMonth(nextScheduleDate.getMonth() + 1);
+        } else if (repeat_type === 'custom_day' && custom_days && custom_days > 0) {
+            nextScheduleDate.setDate(nextScheduleDate.getDate() + parseInt(custom_days));
+        } else {
+            nextScheduleDate.setDate(nextScheduleDate.getDate() + 1); // daily
+        }
+
         const meetingData = {
             meeting_name: meeting_name || template.name,
             meeting_description: meeting_description || template.description,
@@ -310,7 +327,7 @@ const createMeeting = async (req, res) => {
             created_by: created_by,
             repeat_type: repeat_type || 'daily', // Default to 'daily'
             custom_days: custom_days || null,
-            next_schedule: start_time // Initially set next_schedule to start_time
+            next_schedule: nextScheduleDate.toISOString().slice(0, 19).replace('T', ' ')
         };
 
         const [meetingResult] = await db.query(
@@ -1271,9 +1288,9 @@ const forwardMeetingPoint = async (req, res) => {
         if (existingRows.length > 0) {
             await db.query(
                 `UPDATE meeting_point_future 
-                 SET forward_type = ?, user_id = ?, forward_decision = ?, template_id = ?
+                 SET forward_type = ?, user_id = ?, forward_decision = ?, template_id = ?, current_meeting_id = ?, add_point_meeting = 'false'
                  WHERE point_id = ?`,
-                [forwardType, accessUserId, forwardDecision, templateId, pointId]
+                [forwardType, accessUserId, forwardDecision, templateId, meetingId, pointId]
             );
 
             return res.status(200).json({
@@ -1283,9 +1300,9 @@ const forwardMeetingPoint = async (req, res) => {
         } else {
             // INSERT new row
             await db.query(
-                `INSERT INTO meeting_point_future (point_id, template_id, forward_type, user_id, forward_decision)
-                 VALUES (?, ?, ?, ?, ?)`,
-                [pointId, templateId, forwardType, accessUserId, forwardDecision]
+                `INSERT INTO meeting_point_future (point_id, template_id, forward_type, user_id, forward_decision, current_meeting_id, add_point_meeting)
+                 VALUES (?, ?, ?, ?, ?, ?, 'false')`,
+                [pointId, templateId, forwardType, accessUserId, forwardDecision, meetingId]
             );
 
             return res.status(201).json({
@@ -1382,6 +1399,33 @@ const getUserMeetings = async (req, res) => {
             meetingIds
         );
 
+        const [forwardingInfo] = await db.query(
+            `SELECT 
+                new_mp.id AS point_id,
+                mpf.forward_type,
+                mpf.forward_decision,
+                t.name AS template_name,
+                mpf.current_meeting_id,
+                old_mp.remarks_by_admin AS previous_admin_remarks
+             FROM meeting_points new_mp
+             INNER JOIN meeting_point_future mpf ON new_mp.forwarded_from_point_id = mpf.point_id
+             LEFT JOIN meeting_points old_mp ON old_mp.id = mpf.point_id
+             LEFT JOIN templates t ON mpf.template_id = t.id
+             WHERE new_mp.meeting_id IN (${placeholders}) 
+               AND mpf.forward_type != 'NIL'`,
+            meetingIds
+        );
+
+        const forwardingMap = forwardingInfo.reduce((acc, info) => {
+            acc[info.point_id] = {
+                type: info.forward_type,
+                decision: info.forward_decision,
+                text: info.template_name ? `next ${info.template_name}` : null,
+                previous_admin_remarks: info.previous_admin_remarks
+            };
+            return acc;
+        }, {});
+
         // Group members by meeting and role
         const membersByMeeting = {};
         meetingMembers.forEach(member => {
@@ -1420,6 +1464,10 @@ const getUserMeetings = async (req, res) => {
                 meeting_id: point.meeting_id,
                 subpoints: []
             };
+
+            if (forwardingMap[point.id]) {
+                pointObj.forward_info = forwardingMap[point.id];
+            }
             pointIdMap[point.id] = pointObj;
         });
 
@@ -1812,18 +1860,32 @@ const getMeetingAgenda = async (req, res) => {
         );
 
         // Then get forwarding info for points that have it
-        const [forwardingInfo] = await db.query(
-            `SELECT 
-                mpf.point_id,
-                mpf.forward_type,
-                mpf.forward_decision,
-                t.name AS template_name
-             FROM meeting_point_future mpf
-             JOIN meeting_points mp ON mpf.point_id = mp.id
-             LEFT JOIN templates t ON mpf.template_id = t.id
-             WHERE mp.meeting_id = ?`,
+        // First check which points have forwarded_from_point_id set
+        const [pointsCheck] = await db.query(
+            `SELECT id, point_name, forwarded_from_point_id FROM meeting_points WHERE meeting_id = ?`,
             [id]
         );
+        console.log('DEBUG - Points in meeting:', JSON.stringify(pointsCheck, null, 2));
+
+        const [forwardingInfo] = await db.query(
+            `SELECT 
+                new_mp.id AS point_id,
+                new_mp.forwarded_from_point_id,
+                mpf.forward_type,
+                mpf.forward_decision,
+                t.name AS template_name,
+                mpf.current_meeting_id,
+                old_mp.remarks_by_admin AS previous_admin_remarks
+             FROM meeting_points new_mp
+             INNER JOIN meeting_point_future mpf ON new_mp.forwarded_from_point_id = mpf.point_id
+             LEFT JOIN meeting_points old_mp ON old_mp.id = mpf.point_id
+             LEFT JOIN templates t ON mpf.template_id = t.id
+             WHERE new_mp.meeting_id = ? 
+               AND mpf.forward_type != 'NIL'`,
+            [id]
+        );
+
+        console.log('DEBUG - forwardingInfo:', JSON.stringify(forwardingInfo, null, 2));
 
         // Get voting information for all points
         const [votingInfo] = await db.query(
@@ -1847,7 +1909,8 @@ const getMeetingAgenda = async (req, res) => {
             acc[info.point_id] = {
                 type: info.forward_type,
                 decision: info.forward_decision,
-                text: info.template_name ? `next ${info.template_name}` : null
+                text: info.template_name ? `next ${info.template_name}` : null,
+                previous_admin_remarks: info.previous_admin_remarks
             };
             return acc;
         }, {});
@@ -1948,14 +2011,28 @@ const startMeeting = async (req, res) => {
     }
 
     try {
-        // Check the current status of the meeting
-        const [rows] = await db.query(`SELECT meeting_status FROM meeting WHERE id = ?`, [meetingId]);
+        // Check the current status and date of the meeting
+        const [rows] = await db.query(`SELECT meeting_status, start_time FROM meeting WHERE id = ?`, [meetingId]);
 
         if (rows.length === 0) {
             return res.status(404).json({
                 message: "Meeting not found."
             });
         }
+
+        // Check if meeting date is in the future (date-only comparison)
+        const meetingDate = new Date(rows[0].start_time);
+        const meetingDay = new Date(meetingDate);
+        meetingDay.setHours(0, 0, 0, 0);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        // if (meetingDay > today) {
+        //     return res.status(400).json({
+        //         success: false,
+        //         message: "Cannot start a meeting scheduled for a future date."
+        //     });
+        // }
 
         if (rows[0].meeting_status !== "not_started") {
             return res.status(400).json({
@@ -2017,7 +2094,7 @@ const endMeeting = async (req, res) => {
 
     try {
         // Check if the meeting exists and is in progress
-        const [rows] = await db.query(`SELECT meeting_status FROM meeting WHERE id = ?`, [meetingId]);
+        const [rows] = await db.query(`SELECT meeting_status, repeat_type, custom_days, next_schedule, start_time FROM meeting WHERE id = ?`, [meetingId]);
 
         if (rows.length === 0) {
             return res.status(404).json({
@@ -2043,8 +2120,21 @@ const endMeeting = async (req, res) => {
             });
         }
 
+        // Immediately clone next meeting based on repeat_type and next_schedule
+        const repeatType = String(rows[0].repeat_type || 'daily').toLowerCase();
+        const customDays = rows[0].custom_days || null;
+        const nextSchedule = new Date(rows[0].next_schedule || rows[0].start_time || Date.now());
+
+        const newMeetingId = await cloneMeetingForNextOccurrence(meetingId, nextSchedule);
+
+        // Advance next_schedule to the following occurrence
+        const following = calculateNextSchedule(nextSchedule, repeatType, customDays);
+        const followingStr = new Date(following).toISOString().slice(0, 19).replace('T', ' ');
+        await db.query(`UPDATE meeting SET next_schedule = ? WHERE id = ?`, [followingStr, meetingId]);
+
         res.json({
-            message: "Meeting ended successfully."
+            message: "Meeting ended successfully. Next occurrence created.",
+            next_meeting_id: newMeetingId || null
         });
 
     } catch (error) {
@@ -2519,14 +2609,14 @@ const getForwardedPointHistory = async (req, res) => {
 
         // console.log('Access GRANTED for user:', accessUserId);
 
-        // Build the history by tracing back through meeting_point_future
+        // Build the history by tracing back through forwarded_from_point_id
         const history = [];
         let currentPointId = pointId;
         const visitedPoints = new Set();
         
         // console.log('Starting history trace for point:', point.point_name);
 
-        // Trace back the history
+        // Trace back the history using forwarded_from_point_id
         while (currentPointId && !visitedPoints.has(currentPointId)) {
             visitedPoints.add(currentPointId);
 
@@ -2572,21 +2662,9 @@ const getForwardedPointHistory = async (req, res) => {
                 template_name: detail.template_name
             });
 
-            // Try to find the previous occurrence of this point
-            const [previousPoint] = await db.query(
-                `SELECT mp2.id, mp2.point_name, mp2.meeting_id
-                 FROM meeting_points mp2
-                 JOIN meeting m2 ON mp2.meeting_id = m2.id
-                 WHERE mp2.point_name = ? 
-                   AND mp2.meeting_id != ?
-                   AND m2.start_time < (SELECT start_time FROM meeting WHERE id = ?)
-                 ORDER BY m2.start_time DESC
-                 LIMIT 1`,
-                [detail.point_name, detail.meeting_id, detail.meeting_id]
-            );
-
-            if (previousPoint.length > 0) {
-                currentPointId = previousPoint[0].id;
+            // Follow the forwarded_from_point_id chain
+            if (detail.forwarded_from_point_id) {
+                currentPointId = detail.forwarded_from_point_id;
             } else {
                 break;
             }
@@ -3012,7 +3090,7 @@ const adminApproveAlternate = async (req, res) => {
     }
 };
 
-// Delete point function
+// Delete point function (admin-only via route middleware)
 const deletePoint = async (req, res) => {
     const pointId = req.params.pointId;
 
@@ -3024,27 +3102,24 @@ const deletePoint = async (req, res) => {
     }
 
     try {
-
         // Check if point exists
         const [pointCheck] = await db.query(
-            'SELECT id, parent_point_id FROM meeting_points WHERE id = ?',
+            'SELECT id FROM meeting_points WHERE id = ?',
             [pointId]
         );
 
         if (pointCheck.length === 0) {
-            await connection.release();
             return res.status(404).json({
                 success: false,
                 message: 'Point not found'
             });
         }
 
-        // Delete the point (cascade will handle subpoints due to ON DELETE CASCADE)
+        // Delete the point (foreign keys should cascade subpoints if configured)
         await db.query(
             'DELETE FROM meeting_points WHERE id = ?',
             [pointId]
         );
-
 
         return res.status(200).json({
             success: true,

@@ -19,13 +19,20 @@ const Dashboard = () => {
   const [meetings, setMeetings] = useState([]);
   const navigate = useNavigate();
 
-  const tabs = ["Todo", "Scheduled", "Draft"];
+  const TZ = "Asia/Kolkata"; // keep display and filtering in local business timezone
+
+  const tabs = ["Todo", "Scheduled"];
 
   const meeting_progress = (points) => {
-    if (!points || points.length === 0) return 0;
+    if (!points || points.length === 0) return null;
 
     const approvedCount = points.filter(point => point.approved_by_admin === "APPROVED").length;
-    return Math.round((approvedCount / points.length) * 100).toString() + "%";
+    const percent = Math.round((approvedCount / points.length) * 100);
+    if (percent <= 0) return null; // avoid showing random zero
+    return {
+      value: percent,
+      text: `${percent}%`
+    };
   };
 
   const fetchMeetings = async () => {
@@ -39,14 +46,15 @@ const Dashboard = () => {
 
       if (response.data.success) {
         const formattedMeetings = response.data.meetings.map(meeting => {
-          var formattedDate = `${formatInTimeZone(meeting.start_time, 'UTC', 'dd MMMM, yyyy')} | ${formatInTimeZone(meeting.start_time, 'UTC', 'hh:mm a')} - ${formatInTimeZone(meeting.end_time, 'UTC', 'hh:mm a')}`
+          const formattedDate = `${formatInTimeZone(meeting.start_time, TZ, 'dd MMMM, yyyy')} | ${formatInTimeZone(meeting.start_time, TZ, 'hh:mm a')} - ${formatInTimeZone(meeting.end_time, TZ, 'hh:mm a')}`;
+          const displayDate = formatInTimeZone(meeting.start_time, TZ, "EEEE, d MMMM, yyyy");
           return ({
             id: meeting.id,
             type: `Info: ${meeting.role}`,
             title: meeting.meeting_name,
-            date: dayjs(meeting.start_time).format("dddd, D MMMM, YYYY"),
+            date: displayDate,
             dateText: formattedDate,
-            time: dayjs(meeting.start_time).format("h:mm A"),
+            time: formatInTimeZone(meeting.start_time, TZ, "h:mm a"),
             duration: dayjs(meeting.end_time).diff(dayjs(meeting.start_time), 'minute') + " min",
             location: meeting.venue_name, // updated line
             description: meeting.meeting_description,
@@ -103,7 +111,7 @@ const Dashboard = () => {
 
   // const filteredMeetings = meetings.filter((meeting) => {
   //   const meetingDate = dayjs(meeting.date, "dddd, D MMMM, YYYY");
-  //   if (activeTab === "Todo") {
+  //   if (activeTab === "Today's Meeting") {
   //     return meetingDate.isSame(dayjs(), 'day');
   //   } else if (activeTab === "Scheduled") {
   //     return meetingDate.isAfter(dayjs(), 'day');
@@ -245,10 +253,10 @@ const Dashboard = () => {
               {meeting.progress && (
                 <div className="progress-section">
                   <div className="progress-header">
-                    <span>Task Progress: {meeting.progress}</span>
+                    <span>Task Progress: {meeting.progress.text}</span>
                   </div>
                   <div className="progress-bar">
-                    <div className="progress-fill" style={{ width: meeting.progress }}></div>
+                    <div className="progress-fill" style={{ width: `${meeting.progress.value}%` }}></div>
                   </div>
                 </div>
               )}

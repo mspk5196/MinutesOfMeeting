@@ -81,7 +81,7 @@ function App() {
 
   return (
     <PrimeReactProvider value={value}>
-      <Router basename="/meetings">
+      <Router>
         <Toast />
         <div className="App">
           {isCheckingToken ? (
@@ -131,7 +131,6 @@ function App() {
                     <Route path="/template1" element={<Template1 />} />
                     <Route path="/cmeeting" element={<Cmeeting />} />
                     <Route path="/reports" element={<Reports />} />
-                    <Route path="/support" element={<div>Support</div>} />
                     <Route path="/logout" element={<Logout />} />
                     <Route path="/test-error-boundary" element={<ErrorBoundaryTest />} />
                     <Route path='/calendar' element={<Calendar />} />

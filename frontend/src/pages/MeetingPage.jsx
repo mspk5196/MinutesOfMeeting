@@ -23,11 +23,15 @@ import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import AttendanceIcon from "@mui/icons-material/HowToReg";
 import AgendaIcon from "@mui/icons-material/Groups";
 import HistoryIcon from "@mui/icons-material/History";
-import ForwardingForm from "./MeetingPage2";
+import ForwardingForm from "./ForwardingForm";
 import image from "../assets/bannariammanheader.png";
 import { useNavigate } from "react-router-dom";
 import { useLocation } from "react-router-dom";
 import { api, apiUrl } from "../utils/apiClient";
+import {
+  notificationManager,
+  NOTIFICATION_TYPES,
+} from "../utils/notificationManager";
 import Reason from "../components/ViewReason";
 import VotingButtons from "../components/VotingButtons";
 import VotingDiagnostic from "../components/VotingDiagnostic";
@@ -60,12 +64,22 @@ const headerStyle = {
 export default function StartMeet({ handleBack }) {
   const [selectedReason, setSelectedReason] = useState(null);
   const [attendanceRecords, setAttendanceRecords] = useState([]);
-  
+
   // Submit guard hooks
-  const { isSubmitting: isSubmittingPoints, executeSubmit: executeSubmitPoints } = useSubmitGuard(2000);
-  const { isSubmitting: isSubmittingEnd, executeSubmit: executeSubmitEnd } = useSubmitGuard(2000);
-  const { isSubmitting: isSubmittingAttendance, executeSubmit: executeSubmitAttendance } = useSubmitGuard(500);
-  const { isSubmitting: isSubmittingApprove, executeSubmit: executeSubmitApprove } = useSubmitGuard(1000);
+  const {
+    isSubmitting: isSubmittingPoints,
+    executeSubmit: executeSubmitPoints,
+  } = useSubmitGuard(2000);
+  const { isSubmitting: isSubmittingEnd, executeSubmit: executeSubmitEnd } =
+    useSubmitGuard(2000);
+  const {
+    isSubmitting: isSubmittingAttendance,
+    executeSubmit: executeSubmitAttendance,
+  } = useSubmitGuard(500);
+  const {
+    isSubmitting: isSubmittingApprove,
+    executeSubmit: executeSubmitApprove,
+  } = useSubmitGuard(1000);
 
   const handleViewReason = (userId, username) => {
     const rejection = rejectionRecords.find((r) => r.user_id === userId);
@@ -85,8 +99,11 @@ export default function StartMeet({ handleBack }) {
   // State management
   const [status, setStatus] = useState(null);
   const [onStart, setOnStart] = useState(
-    meetingData?.meeting_status === "in_progress" || 
-    meetingData?.status === "in_progress"
+    meetingData?.meeting_status === "in_progress" ||
+      meetingData?.status === "in_progress"
+  );
+  const [meetingStatus, setMeetingStatus] = useState(
+    meetingData?.meeting_status || meetingData?.status || "not_started"
   );
   const [selectedTab, setSelectedTab] = useState("attendance");
   const [isForward, setIsForward] = useState(false);
@@ -251,6 +268,10 @@ export default function StartMeet({ handleBack }) {
   //     updatedPoints[index].DecisionStatus = newStatus;
   //     setPoints(updatedPoints);
   // };
+
+  useEffect(() => {
+    console.log(points);
+  }, [points]);
 
   // For status buttons (main or subpoint)
   function handleChangeStatus(
@@ -463,62 +484,64 @@ export default function StartMeet({ handleBack }) {
   const setMeetingState = async () => {
     try {
       const token = localStorage.getItem("token");
-      const response = await api.get(
-        `/api/voting/meeting/${meetingData.id}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const response = await api.get(`/api/voting/meeting/${meetingData.id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       // console.log(response.data)
 
       if (response.data.meeting_status == "in_progress") {
         setOnStart(true);
+        setMeetingStatus("in_progress");
+      } else if (response.data.meeting_status === "completed") {
+        setMeetingStatus("completed");
       }
     } catch (error) {
       console.error("Error getting meeting state:", error);
     }
   };
 
-  const approvePoint = executeSubmitApprove(async (pointId, approvedDecision, point, index) => {
-    try {
-      const token = localStorage.getItem("token");
-      const sentobj = { pointId, approvedDecision };
-      if (point.todo || point.old_todo) {
-        const response = await api.post(
-          "/api/meetings/approve-point",
-          sentobj,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
+  const approvePoint = executeSubmitApprove(
+    async (pointId, approvedDecision, point, index) => {
+      try {
+        const token = localStorage.getItem("token");
+        const sentobj = { pointId, approvedDecision };
+        if (point.todo || point.old_todo) {
+          const response = await api.post(
+            "/api/meetings/approve-point",
+            sentobj,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+          if (approvedDecision == "APPROVED") {
+            handleStatusChange(index, "Approve");
+            // Update the approved_by_admin field in points state
+            setPoints((prevPoints) => {
+              const updated = [...prevPoints];
+              updated[index].approved_by_admin = "APPROVED";
+              return updated;
+            });
+          } else if (approvedDecision == "NOT APPROVED") {
+            handleStatusChange(index, "Not Approve");
+            // Update the approved_by_admin field in points state
+            setPoints((prevPoints) => {
+              const updated = [...prevPoints];
+              updated[index].approved_by_admin = "NOT APPROVED";
+              return updated;
+            });
           }
-        );
-        if (approvedDecision == "APPROVED") {
-          handleStatusChange(index, "Approve");
-          // Update the approved_by_admin field in points state
-          setPoints(prevPoints => {
-            const updated = [...prevPoints];
-            updated[index].approved_by_admin = "APPROVED";
-            return updated;
-          });
-        } else if (approvedDecision == "NOT APPROVED") {
-          handleStatusChange(index, "Not Approve");
-          // Update the approved_by_admin field in points state
-          setPoints(prevPoints => {
-            const updated = [...prevPoints];
-            updated[index].approved_by_admin = "NOT APPROVED";
-            return updated;
-          });
+        } else {
+          alert("todo is null");
         }
-      } else {
-        alert("todo is null");
+      } catch (err) {
+        console.error(err);
       }
-    } catch (err) {
-      console.error(err);
     }
-  });
+  );
 
   // Point history modal handlers
   const handleViewPointHistory = async (pointId, pointName) => {
@@ -527,22 +550,22 @@ export default function StartMeet({ handleBack }) {
     setSelectedPointName(pointName);
     setSelectedPointHistory([]);
 
-    const token = localStorage.getItem('token');
-    
+    const token = localStorage.getItem("token");
+
     try {
       const response = await api.get(
         `/api/meetings/forwarded-point-history/${pointId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
-          }
+          },
         }
       );
-      
+
       setSelectedPointHistory(response.data.history || []);
     } catch (err) {
       console.error("Error fetching point history:", err);
-      alert('Failed to fetch point history');
+      alert("Failed to fetch point history");
     } finally {
       setHistoryLoading(false);
     }
@@ -608,17 +631,32 @@ export default function StartMeet({ handleBack }) {
       }
     }
     if (flag == 0) {
-      const response = await api.post(
-        `/api/meetings/start-meeting/`,
-        { meetingId: id },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      try {
+        const response = await api.post(
+          `/api/meetings/start-meeting/`,
+          { meetingId: id },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
 
-      return true;
+        setMeetingStatus("in_progress");
+        return true;
+      } catch (error) {
+        console.error("Error starting meeting:", error);
+        const message =
+          error.response?.data?.message || "Cannot start this meeting.";
+        if (error.response?.status === 403) {
+          notificationManager.error(
+            "You do not have permission to start this meeting."
+          );
+        } else {
+          notificationManager.error(message);
+        }
+        return false;
+      }
     }
     return false;
   }
@@ -630,11 +668,13 @@ export default function StartMeet({ handleBack }) {
 
   const EndMeeting = executeSubmitEnd(async () => {
     // console.log('EndMeeting called, attempting to end meeting...');
-    
+
     // Simple check - just notify user that meeting is being ended
     // The backend only checks if meeting status is "in_progress"
-    const confirmEnd = window.confirm('Are you sure you want to end this meeting?');
-    
+    const confirmEnd = window.confirm(
+      "Are you sure you want to end this meeting?"
+    );
+
     if (!confirmEnd) {
       return;
     }
@@ -642,7 +682,7 @@ export default function StartMeet({ handleBack }) {
     try {
       var id = meetingData.id;
       var token = localStorage.getItem("token");
-      
+
       if (!token) {
         alert("Authentication token not found. Please login again.");
         return;
@@ -654,7 +694,7 @@ export default function StartMeet({ handleBack }) {
       }
 
       // console.log('Sending end meeting request for meetingId:', id);
-      
+
       const response = await api.post(
         `/api/meetings/end-meeting/`,
         { meetingId: id },
@@ -664,7 +704,7 @@ export default function StartMeet({ handleBack }) {
           },
         }
       );
-      
+
       // Check if response is successful
       if (!response || !response.data) {
         alert("No response from server. Please try again.");
@@ -674,41 +714,63 @@ export default function StartMeet({ handleBack }) {
       // Navigate only on success
       if (response.status === 200 || response.status === 201) {
         // console.log('Meeting ended successfully, navigating to reports...');
+        setMeetingStatus("completed");
+        setOnStart(false);
         navigate(`/reports/${meetingData.id}`);
       } else {
-        alert(response.data?.message || "Failed to end meeting. Please try again.");
+        alert(
+          response.data?.message || "Failed to end meeting. Please try again."
+        );
       }
     } catch (error) {
       console.error("Error ending meeting:", error);
-      
+
       // Handle different error scenarios
       if (error.response) {
         // Server responded with error status
         const status = error.response.status;
         const message = error.response.data?.message;
-        
-        switch(status) {
+
+        switch (status) {
           case 400:
-            alert(`Bad request: ${message || 'Meeting cannot be ended or is not in progress.'}`);
+            alert(
+              `Bad request: ${
+                message || "Meeting cannot be ended or is not in progress."
+              }`
+            );
             break;
           case 403:
-            alert(`Unauthorized: ${message || 'You do not have permission to end this meeting.'}`);
+            alert(
+              `Unauthorized: ${
+                message || "You do not have permission to end this meeting."
+              }`
+            );
             break;
           case 404:
-            alert(`Not found: ${message || 'Meeting not found.'}`);
+            alert(`Not found: ${message || "Meeting not found."}`);
             break;
           case 500:
-            alert(`Server error: ${message || 'Server error occurred. Please try again later.'}`);
+            alert(
+              `Server error: ${
+                message || "Server error occurred. Please try again later."
+              }`
+            );
             break;
           default:
             alert(message || `Error (${status}): Failed to end meeting.`);
         }
       } else if (error.request) {
         // Request made but no response received
-        alert("No response from server. Please check your internet connection and try again.");
+        alert(
+          "No response from server. Please check your internet connection and try again."
+        );
       } else {
         // Error in setting up the request
-        alert(`Error: ${error.message || 'Failed to end meeting. Please try again.'}`);
+        alert(
+          `Error: ${
+            error.message || "Failed to end meeting. Please try again."
+          }`
+        );
       }
     }
   });
@@ -743,40 +805,8 @@ export default function StartMeet({ handleBack }) {
     if (meetingData.id) fetchRejectionRecords();
   }, [meetingData.id]);
 
-  useEffect(() => {
-    meetingAgenda.forEach((point) => {
-      if (!point.forward_info) return;
-
-      if (point.parent_point_id) {
-        // This is a subpoint
-        const parentId = point.parent_point_id;
-
-        // Find mainIndex: index in `points` where id matches parent
-        const mainIndex = points.findIndex((p) => p.point_id === parentId);
-        if (mainIndex === -1) return;
-
-        // Now, find subIndex: index in `points[mainIndex].subpoints` where id matches subpoint
-        const subIndex = points[mainIndex]?.subpoints?.findIndex(
-          (sp) => sp.point_id === point.id
-        );
-        if (subIndex === -1 || subIndex === undefined) return;
-
-
-        handleChangeStatus(
-          mainIndex,
-          point.forward_info.decision,
-          true,
-          subIndex
-        );
-      } else {
-        // This is a main point
-        const mainIndex = points.findIndex((p) => p.point_id === point.id);
-        if (mainIndex === -1) return;
-
-        handleChangeStatus(mainIndex, point.forward_info.decision);
-      }
-    });
-  }, [meetingAgenda]);
+  // Removed: Auto-applying forward_info.decision to newly forwarded points
+  // Forwarded points should only show previous remarks, not pre-select status
 
   // Handle vote updates
   const handleVoteUpdate = (pointId, updatedVotingData) => {
@@ -801,20 +831,22 @@ export default function StartMeet({ handleBack }) {
 
     try {
       const token = localStorage.getItem("token");
-      const response = await api.get(
-        `/api/voting/meeting/${meetingData.id}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const response = await api.get(`/api/voting/meeting/${meetingData.id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       if (response.data.success) {
-
         // Check meeting status and update onStart state
-        if (response.data.meeting && response.data.meeting_status === "in_progress") {
+        if (
+          response.data.meeting &&
+          response.data.meeting_status === "in_progress"
+        ) {
           setOnStart(true);
+          setMeetingStatus("in_progress");
+        } else if (response.data.meeting_status) {
+          setMeetingStatus(response.data.meeting_status);
         }
 
         // Update both points and meetingAgenda with voting data
@@ -947,26 +979,48 @@ export default function StartMeet({ handleBack }) {
 
   const currentUserId = getUserIdFromToken();
   const isAdmin = meetingData?.host_id === currentUserId;
+  const effectiveMeetingStatus = onStart ? "in_progress" : meetingStatus;
 
+  // Redirect away from meeting page once it is completed to avoid stale views
+  useEffect(() => {
+    const status =
+      meetingStatus || meetingData?.meeting_status || meetingData?.status;
+    if (status === "completed") {
+      navigate("/dashboardrightpanel", { replace: true });
+    }
+  }, [
+    meetingStatus,
+    meetingData?.meeting_status,
+    meetingData?.status,
+    navigate,
+  ]);
 
   // Delete point function
-  const handleDeletePoint = async (index, pointId, isSubpoint = false, subIndex = null) => {
-    if (!window.confirm('Are you sure you want to delete this point?')) {
+  const handleDeletePoint = async (
+    index,
+    pointId,
+    isSubpoint = false,
+    subIndex = null
+  ) => {
+    if (!window.confirm("Are you sure you want to delete this point?")) {
       return;
     }
     // console.log(index, pointId)
     try {
       // Try to delete from backend if point has an ID (has been saved)
       if (pointId) {
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem("token");
         try {
           await api.delete(`/api/meetings/point/${pointId}`, {
             headers: {
               Authorization: `Bearer ${token}`,
-            }
+            },
           });
         } catch (backendError) {
-          console.warn('Backend delete failed, removing from local state only:', backendError);
+          console.warn(
+            "Backend delete failed, removing from local state only:",
+            backendError
+          );
           // If backend delete fails, continue with local state update
         }
       }
@@ -975,7 +1029,9 @@ export default function StartMeet({ handleBack }) {
       if (isSubpoint && subIndex !== null) {
         // Delete subpoint
         const updatedPoints = [...points];
-        updatedPoints[index].subpoints = updatedPoints[index].subpoints.filter((_, idx) => idx !== subIndex);
+        updatedPoints[index].subpoints = updatedPoints[index].subpoints.filter(
+          (_, idx) => idx !== subIndex
+        );
         setPoints(updatedPoints);
       } else {
         // Delete main point
@@ -985,8 +1041,8 @@ export default function StartMeet({ handleBack }) {
 
       // console.log('Point deleted successfully');
     } catch (error) {
-      console.error('Error deleting point:', error);
-      alert('Failed to delete point. Please try again.');
+      console.error("Error deleting point:", error);
+      alert("Failed to delete point. Please try again.");
     }
   };
 
@@ -1038,7 +1094,7 @@ export default function StartMeet({ handleBack }) {
               borderRadius: "8px",
             }}
           >
-            <Button
+            {/* <Button
               variant="outlined"
               sx={{
                 borderRadius: "8px",
@@ -1056,7 +1112,7 @@ export default function StartMeet({ handleBack }) {
             >
               <DeleteOutlineIcon sx={{ fontSize: "18px" }} />
               Cancel Meeting
-            </Button>
+            </Button> */}
             <Button
               variant="contained"
               sx={{
@@ -1555,7 +1611,13 @@ export default function StartMeet({ handleBack }) {
                               maxWidth: "300px",
                             }}
                           >
-                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                            <Box
+                              sx={{
+                                display: "flex",
+                                flexDirection: "column",
+                                gap: 0.5,
+                              }}
+                            >
                               <TextField
                                 variant="standard"
                                 placeholder="Enter discussion topic"
@@ -1576,40 +1638,80 @@ export default function StartMeet({ handleBack }) {
                                   )
                                 }
                               />
-                              {point.point_name && point.forward_info && point.forward_info.type !== 'NIL' && (
-                                <Link
-                                  component="button"
-                                  variant="caption"
-                                  onClick={() => handleViewPointHistory(point.point_id || point.id, point.point_name)}
-                                  sx={{
-                                    textAlign: 'left',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: 0.5,
-                                    fontSize: '11px'
-                                  }}
-                                >
-                                  <HistoryIcon sx={{ fontSize: 14 }} />
-                                  View History
-                                </Link>
-                              )}
+                              {point.point_name &&
+                                point.forward_info &&
+                                point.forward_info.type !== "NIL" && (
+                                  <Link
+                                    component="button"
+                                    variant="caption"
+                                    onClick={() =>
+                                      handleViewPointHistory(
+                                        point.point_id || point.id,
+                                        point.point_name
+                                      )
+                                    }
+                                    sx={{
+                                      textAlign: "left",
+                                      display: "flex",
+                                      alignItems: "center",
+                                      gap: 0.5,
+                                      fontSize: "11px",
+                                    }}
+                                  >
+                                    <HistoryIcon sx={{ fontSize: 14 }} />
+                                    View History
+                                  </Link>
+                                )}
                             </Box>
                           </TableCell>
                           <TableCell sx={cellStyle}>
-                            <TextField
-                              variant="standard"
-                              placeholder="Add remarks"
-                              fullWidth
-                              value={point.remarks_by_admin}
-                              onChange={(e) =>
-                                handleChange(
-                                  index,
-                                  "remarks_by_admin",
-                                  e.target.value
-                                )
-                              }
-                              InputProps={{ disableUnderline: true }}
-                            />
+                            <Box
+                              sx={{
+                                display: "flex",
+                                flexDirection: "column",
+                                gap: 1,
+                              }}
+                            >
+                              <TextField
+                                variant="standard"
+                                placeholder="Add remarks"
+                                fullWidth
+                                value={point.remarks_by_admin}
+                                onChange={(e) =>
+                                  handleChange(
+                                    index,
+                                    "remarks_by_admin",
+                                    e.target.value
+                                  )
+                                }
+                                InputProps={{ disableUnderline: true }}
+                              />
+                              {point.forward_info?.previous_admin_remarks && (
+                                <Box
+                                  sx={{
+                                    fontSize: "11px",
+                                    fontStyle: "italic",
+                                    color: "#666",
+                                    padding: "4px 0",
+                                    borderTop: "1px solid #ddd",
+                                    marginTop: "4px",
+                                    paddingTop: "4px",
+                                  }}
+                                >
+                                  <Typography
+                                    variant="caption"
+                                    sx={{
+                                      display: "block",
+                                      fontWeight: "bold",
+                                      color: "#555",
+                                    }}
+                                  >
+                                    Previous Admin Remarks:
+                                  </Typography>
+                                  {point.forward_info.previous_admin_remarks}
+                                </Box>
+                              )}
+                            </Box>
                           </TableCell>
                           <TableCell sx={{ ...cellStyle, textAlign: "center" }}>
                             <Box
@@ -1834,14 +1936,16 @@ export default function StartMeet({ handleBack }) {
                               votingData={point.voting}
                               onVoteUpdate={handleVoteUpdate}
                               isAdmin={isAdmin}
-                              meetingStatus={meetingData?.meeting_status}
+                              meetingStatus={effectiveMeetingStatus}
                               compact={true}
                             />
                           </TableCell>
                           <TableCell sx={{ ...cellStyle, textAlign: "center" }}>
                             <IconButton
                               size="small"
-                              onClick={() => {handleDeletePoint(index, point.point_id, false)}}
+                              onClick={() => {
+                                handleDeletePoint(index, point.point_id, false);
+                              }}
                               sx={{
                                 color: "error.main",
                                 "&:hover": {
@@ -1902,22 +2006,55 @@ export default function StartMeet({ handleBack }) {
                                 />
                               </TableCell>
                               <TableCell sx={cellStyle}>
-                                <TextField
-                                  variant="standard"
-                                  placeholder="Add remarks"
-                                  fullWidth
-                                  value={subpoint.remarks_by_admin}
-                                  onChange={(e) =>
-                                    handleChange(
-                                      index,
-                                      "remarks_by_admin",
-                                      e.target.value,
-                                      true,
-                                      subIndex
-                                    )
-                                  }
-                                  InputProps={{ disableUnderline: true }}
-                                />
+                                <Box
+                                  sx={{
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    gap: 1,
+                                  }}
+                                >
+                                  <TextField
+                                    variant="standard"
+                                    placeholder="Add remarks"
+                                    fullWidth
+                                    value={subpoint.remarks_by_admin}
+                                    onChange={(e) =>
+                                      handleChange(
+                                        index,
+                                        "remarks_by_admin",
+                                        e.target.value,
+                                        true,
+                                        subIndex
+                                      )
+                                    }
+                                    InputProps={{ disableUnderline: true }}
+                                  />
+                                  {subpoint.forward_info?.previous_admin_remarks && (
+                                    <Box
+                                      sx={{
+                                        fontSize: "11px",
+                                        fontStyle: "italic",
+                                        color: "#666",
+                                        padding: "4px 0",
+                                        borderTop: "1px solid #ddd",
+                                        marginTop: "4px",
+                                        paddingTop: "4px",
+                                      }}
+                                    >
+                                      <Typography
+                                        variant="caption"
+                                        sx={{
+                                          display: "block",
+                                          fontWeight: "bold",
+                                          color: "#555",
+                                        }}
+                                      >
+                                        Previous Admin Remarks:
+                                      </Typography>
+                                      {subpoint.forward_info.previous_admin_remarks}
+                                    </Box>
+                                  )}
+                                </Box>
                               </TableCell>
                               <TableCell
                                 sx={{ ...cellStyle, textAlign: "center" }}
@@ -2163,14 +2300,23 @@ export default function StartMeet({ handleBack }) {
                                   votingData={subpoint.voting}
                                   onVoteUpdate={handleVoteUpdate}
                                   isAdmin={isAdmin}
-                                  meetingStatus={meetingData?.meeting_status}
+                                  meetingStatus={effectiveMeetingStatus}
                                   compact={true}
                                 />
                               </TableCell>
-                              <TableCell sx={{ ...cellStyle, textAlign: "center" }}>
+                              <TableCell
+                                sx={{ ...cellStyle, textAlign: "center" }}
+                              >
                                 <IconButton
                                   size="small"
-                                  onClick={() => handleDeletePoint(index, subpoint.point_id, true, subIndex)}
+                                  onClick={() =>
+                                    handleDeletePoint(
+                                      index,
+                                      subpoint.point_id,
+                                      true,
+                                      subIndex
+                                    )
+                                  }
                                   sx={{
                                     color: "error.main",
                                     "&:hover": {
@@ -2257,7 +2403,7 @@ export default function StartMeet({ handleBack }) {
                   },
                 }}
               >
-                {isSubmittingPoints ? '⏳ Saving...' : '💾 Save Meeting Points'}
+                {isSubmittingPoints ? "⏳ Saving..." : "💾 Save Meeting Points"}
               </Button>
             </Box>
           </TableContainer>
@@ -2276,6 +2422,9 @@ export default function StartMeet({ handleBack }) {
                   <TableCell sx={headerCellStyle}>Status</TableCell>
                   <TableCell sx={headerCellStyle}>Responsibility</TableCell>
                   <TableCell sx={headerCellStyle}>Deadline</TableCell>
+                  {isAdmin && (
+                    <TableCell sx={headerCellStyle}>Actions</TableCell>
+                  )}
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -2305,7 +2454,13 @@ export default function StartMeet({ handleBack }) {
                       <TableCell
                         sx={{ ...mergedCellStyle, fontWeight: "normal" }}
                       >
-                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                        <Box
+                          sx={{
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: 0.5,
+                          }}
+                        >
                           <TextField
                             variant="standard"
                             placeholder="Points forward"
@@ -2327,22 +2482,56 @@ export default function StartMeet({ handleBack }) {
                               handleChange(index, "point_name", e.target.value)
                             }
                           />
-                          {point.point_name && point.forward_info && point.forward_info.type !== 'NIL' && (
-                            <Link
-                              component="button"
-                              variant="caption"
-                              onClick={() => handleViewPointHistory(point.point_id || point.id, point.point_name)}
+                          {point.point_name &&
+                            point.forward_info &&
+                            point.forward_info.type !== "NIL" && (
+                              <Link
+                                component="button"
+                                variant="caption"
+                                onClick={() =>
+                                  handleViewPointHistory(
+                                    point.point_id || point.id,
+                                    point.point_name
+                                  )
+                                }
+                                sx={{
+                                  textAlign: "left",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: 0.5,
+                                  fontSize: "11px",
+                                }}
+                              >
+                                <HistoryIcon sx={{ fontSize: 14 }} />
+                                View History
+                              </Link>
+                            )}
+                          {(point.forward_info?.previous_remarks ||
+                            point.forward_info?.previous_admin_remarks) && (
+                            <Box
                               sx={{
-                                textAlign: 'left',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: 0.5,
-                                fontSize: '11px'
+                                fontSize: "11px",
+                                fontStyle: "italic",
+                                color: "#666",
+                                padding: "4px 0",
+                                borderTop: "1px solid #ddd",
+                                marginTop: "4px",
+                                paddingTop: "4px",
                               }}
                             >
-                              <HistoryIcon sx={{ fontSize: 14 }} />
-                              View History
-                            </Link>
+                              <Typography
+                                variant="caption"
+                                sx={{
+                                  display: "block",
+                                  fontWeight: "bold",
+                                  color: "#555",
+                                  marginBottom: "2px",
+                                }}
+                              >
+                                Previous Admin Remarks:
+                              </Typography>
+                              {point.forward_info.previous_admin_remarks}
+                            </Box>
                           )}
                         </Box>
                       </TableCell>
@@ -2568,6 +2757,23 @@ export default function StartMeet({ handleBack }) {
                           }
                         />
                       </TableCell>
+                      {isAdmin && (
+                        <TableCell sx={{ ...mergedCellStyle, textAlign: "center" }}>
+                          <IconButton
+                            size="small"
+                            onClick={() => handleDeletePoint(index, point.point_id || point.id, false)}
+                            sx={{
+                              color: "error.main",
+                              "&:hover": {
+                                backgroundColor: "error.light",
+                                color: "white",
+                              },
+                            }}
+                          >
+                            <DeleteOutlineIcon fontSize="small" />
+                          </IconButton>
+                        </TableCell>
+                      )}
                     </TableRow>
                   );
                 })}

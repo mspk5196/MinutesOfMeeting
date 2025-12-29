@@ -147,6 +147,20 @@ const PointHistoryModal = ({ open, onClose, history, loading, pointName }) => {
                       {index === history.length - 1 && (
                         <Chip label="Current" size="small" color="primary" />
                       )}
+
+                                        {/* Point Name
+                                        <Box sx={{ mb: 1 }}>
+                                          <Typography variant="body2" sx={{ 
+                                            fontWeight: 'bold',
+                                            color: '#1976d2',
+                                            backgroundColor: '#e3f2fd',
+                                            padding: '4px 8px',
+                                            borderRadius: '4px',
+                                            display: 'inline-block'
+                                          }}>
+                                            Point: {item.point_name}
+                                          </Typography>
+                                        </Box> */}
                     </Box>
 
                     {/* Template Name (if available) */}

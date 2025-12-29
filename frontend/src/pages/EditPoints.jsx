@@ -7,7 +7,7 @@ import AutoAwesomeOutlinedIcon from "@mui/icons-material/AutoAwesomeOutlined";
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import AttendanceIcon from "@mui/icons-material/HowToReg";
 import AgendaIcon from "@mui/icons-material/Groups";
-import ForwardingForm from "./MeetingPage2";
+import ForwardingForm from "./ForwardingForm";
 import image from "../assets/bannariammanheader.png";
 import { useNavigate } from "react-router-dom";
 import { useLocation } from 'react-router-dom';
@@ -256,15 +256,26 @@ export default function EditPoints({ handleBack }) {
         }
         // console.log(flag)
         if (flag == 0) {
+            try {
+                const response = await api.post(`/api/meetings/start-meeting/`, { meetingId: id }, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    }
+                })
+                // console.log(response.data)
 
-            const response = await api.post(`/api/meetings/start-meeting/`, { meetingId: id }, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
+                return true
+            } catch (error) {
+                console.error('Error starting meeting:', error);
+                if (error.response?.status === 400) {
+                    alert(error.response?.data?.message || 'Cannot start this meeting.');
+                } else if (error.response?.status === 403) {
+                    alert('You do not have permission to start this meeting.');
+                } else {
+                    alert('Failed to start meeting. Please try again.');
                 }
-            })
-            // console.log(response.data)
-
-            return true
+                return false;
+            }
         }
         return false
 

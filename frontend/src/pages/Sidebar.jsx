@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { AiOutlineHome, AiOutlineBarChart, AiOutlineBell, AiOutlineDatabase, AiOutlineLogout } from 'react-icons/ai';
-import { FaHeadset } from 'react-icons/fa';
 import '../styles/Sidebar.css';
 import Logo from '../assets/Logo.svg';
 import ProfileImage from '../assets/profileimage.png'; // Add your profile image here
@@ -69,7 +68,7 @@ const Sidebar = () => {
                                 className={`icon ${isActive ? "active" : ""}`}
                                 style={{ color: isActive ? '#007bff' : '#46555F' }}
                             />
-                            <div className="tooltip">Database</div>
+                            <div className="tooltip">Templates</div>
                         </>
                     )}
                 </NavLink>
@@ -107,21 +106,6 @@ const Sidebar = () => {
                         </>
                     )}
                 </NavLink> */}
-                <NavLink
-                    to="/support"
-                    className={({ isActive }) => `menu-item ${isActive ? "active" : ""}`}
-                >
-                    {({ isActive }) => (
-                        <>
-                            <FaHeadset
-                                size={24}
-                                className={`icon ${isActive ? "active" : ""}`}
-                                style={{ color: isActive ? '#007bff' : '#46555F' }}
-                            />
-                            <div className="tooltip">Support</div>
-                        </>
-                    )}
-                </NavLink>
             </div>
 
             <NavLink

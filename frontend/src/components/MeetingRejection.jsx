@@ -130,7 +130,7 @@ function MeetingRejection({ onClose, meetingId, token, meetingMembers }) {
       setLoading(true);
 
       if (rejectionType === 'simple') {
-        // Simple rejection
+        // Simple rejection (previous behavior): single call to /reject with status
         const res = await fetch(apiUrl('/api/meetings/reject'), {
           method: 'POST',
           headers: {
@@ -147,7 +147,6 @@ function MeetingRejection({ onClose, meetingId, token, meetingMembers }) {
         const data = await res.json();
 
         if (res.ok) {
-          // console.log('Rejected successfully:', data);
           alert('Meeting rejected successfully');
           onClose();
         } else {
