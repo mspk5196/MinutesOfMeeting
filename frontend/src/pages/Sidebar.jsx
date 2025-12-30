@@ -109,7 +109,7 @@ const Sidebar = () => {
             </div>
 
             <NavLink
-                to="/logout"
+                to="/meetings/logout"
                 className="menu-item logout-button"
             >
                 <AiOutlineLogout size={24} className="icon" />

@@ -82,7 +82,7 @@ export default function SessionManager({ warningBeforeExpiryMs = 2 * 60 * 1000, 
       delete api.defaults.headers.common['Authorization'];
     } catch {}
     if (typeof onLogout === 'function') onLogout();
-    window.location.href = '/login';
+    window.location.href = '/meetings/login';
   }, [onLogout]);
 
   const extendSession = useCallback(async () => {
