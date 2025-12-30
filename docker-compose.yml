@@ -19,6 +19,7 @@ services:
     restart: unless-stopped
     networks:
       - bitmeetings-network
+      - reverse-proxy
 
   # Backend Service
   backend:
@@ -37,6 +38,7 @@ services:
     restart: unless-stopped
     networks:
       - bitmeetings-network
+      - reverse-proxy
 
   # MySQL Database Service (Optional - if you're using MySQL)
   mysql:
@@ -52,6 +54,7 @@ services:
     restart: unless-stopped
     networks:
       - bitmeetings-network
+      - reverse-proxy
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 10s
