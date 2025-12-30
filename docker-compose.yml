@@ -64,6 +64,8 @@ services:
 networks:
   bitmeetings-network:
     driver: bridge
+  reverse-proxy:
+    external: true
 
 volumes:
   mysql_data:
