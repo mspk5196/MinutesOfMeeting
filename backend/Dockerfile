@@ -13,7 +13,7 @@ RUN npm install
 COPY . .
 
 # Expose port
-EXPOSE 5001
+EXPOSE 5000
 
 # Health check – check the /health endpoint inside the container
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
